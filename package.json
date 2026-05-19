@@ -1,0 +1,24 @@
+{
+  "name": "lti-accessibility-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon --watch src --watch index.js index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "ltijs": "^5.9.9"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
