@@ -1,6 +1,13 @@
 import { env } from './config/env.js'
-import Lti from 'ltijs'
 import accessibilityRoutes from './routes/accessibility.js'
+import authRoutes from './routes/auth.js'
+import contenidoRoutes from './routes/contenido.js'
+import progresoRoutes from './routes/progreso.js'
+import { Provider as Lti } from 'ltijs'
+
+
+console.log('Lti:', Lti)
+console.log('setup:', typeof Lti.setup)
 
 // ─── Configurar ltijs ─────────────────────────────────────────────────────────
 Lti.setup(
@@ -30,12 +37,26 @@ Lti.onDeepLinking(async (token, req, res) => {
   return Lti.DeepLinking.createDeepLinkingMessage(res, [], { message: 'Deep linking no configurado aún.' })
 })
 
+console.log('Router stack:')
+console.log(Lti.app._router?.stack?.map(x => x.name))
 // ─── Iniciar servidor ─────────────────────────────────────────────────────────
 export const startServer = async () => {
   await Lti.deploy({ port: env.port })
 
+  console.log('Express app:', !!Lti.app)
+
+  Lti.app.get('/ping', (req, res) => {
+    res.json({
+      ok: true,
+      timestamp: Date.now()
+    })
+  })
+
   // Registrar rutas en la app Express interna de ltijs
   Lti.app.use('/api/accessibility', accessibilityRoutes)
+  Lti.app.use('/api/auth', authRoutes)
+  Lti.app.use('/api/contenido', contenidoRoutes)
+  Lti.app.use('/api/progreso', progresoRoutes)
 
   // Registrar plataforma si aún no existe
   await registerPlatformIfNeeded()

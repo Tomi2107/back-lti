@@ -1,0 +1,56 @@
+src/
+│
+├── app.js
+├── server.js
+│
+├── config/
+│   ├── database.js
+│   ├── moodle.js
+│   ├── openai.js
+│   └── ltijs.js
+│
+├── models/
+│   ├── User.js
+│   ├── Session.js
+│   ├── EventLog.js
+│   ├── MoodleCourseCache.js
+│   ├── AiCache.js
+│   └── UserProgress.js
+│
+├── controllers/
+│   ├── userController.js
+│   ├── contentController.js
+│   ├── aiController.js
+│   ├── progressController.js
+│   └── eventController.js
+│
+├── services/
+│   ├── moodleService.js
+│   ├── aiService.js
+│   ├── cacheService.js
+│   ├── telemetryService.js
+│   └── progressService.js
+│
+├── repositories/
+│   ├── userRepository.js
+│   ├── sessionRepository.js
+│   ├── eventRepository.js
+│   ├── aiCacheRepository.js
+│   └── progressRepository.js
+│
+├── middleware/
+│   ├── authMiddleware.js
+│   ├── errorMiddleware.js
+│   └── telemetryMiddleware.js
+│
+├── routes/
+│   ├── userRoutes.js
+│   ├── contentRoutes.js
+│   ├── aiRoutes.js
+│   ├── progressRoutes.js
+│   └── eventRoutes.js
+│
+└── utils/
+    ├── hash.js
+    ├── logger.js
+    └── validators.js
