@@ -1,6 +1,3 @@
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
-import { readFileSync } from 'fs'
 import { randomUUID } from 'crypto'
 import express from 'express'
 import jwt from 'jsonwebtoken'
@@ -16,8 +13,6 @@ import contentRoutes from './routes/content.js'
 import aiRoutes from './routes/ai.js'
 import progressRoutes from './routes/progress.js'
 import eventsRoutes from './routes/events.js'
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
 
 // ─── Configura ltijs ──────────────────────────────────────────────────────────
 Lti.setup(
@@ -37,54 +32,40 @@ Lti.setup(
 
 // ─── Upsert usuario + crear sesión → devuelve JWT firmado ─────────────────────
 async function createSessionJwt(moodle_user_sub, moodle_course_id, moodleUrl, userAgent) {
-  // Upsert usuario (primer acceso crea el documento)
   await User.findOneAndUpdate(
     { moodle_user_sub },
     { $setOnInsert: { moodle_user_sub } },
     { upsert: true, new: true }
   )
 
-  // Nueva sesión por cada apertura del panel
   const session_id = randomUUID()
   await Session.create({ session_id, moodle_user_sub, moodle_course_id, user_agent: userAgent ?? '' })
 
-  const payload = {
-    moodle_user_sub,
-    session_id,
-    moodle_course_id,
-    moodleUrl,
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 3600,
-  }
-
-  return jwt.sign(payload, env.moodleSharedSecret, { algorithm: 'HS256' })
-}
-
-// ─── Inyecta el token en el HTML ──────────────────────────────────────────────
-function buildToolHtml(accessToken) {
-  const html = readFileSync(join(__dirname, '../views/tool.html'), 'utf-8')
-  return html.replace(
-    '</head>',
-    `<script>window.__A11Y_TOKEN__ = ${JSON.stringify(accessToken)};</script></head>`
+  return jwt.sign(
+    { moodle_user_sub, session_id, moodle_course_id, moodleUrl,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 3600 },
+    env.moodleSharedSecret,
+    { algorithm: 'HS256' }
   )
 }
 
-// ─── Lanzamiento LTI: upsert usuario, crea sesión, sirve panel ───────────────
+// ─── Lanzamiento LTI: crea sesión y redirige al frontend con el JWT ───────────
 Lti.onConnect(async (token, req, res) => {
   const moodle_user_sub = String(token.user)
   const moodle_course_id = token.platformContext?.context?.id
     ? String(token.platformContext.context.id)
     : null
-  const moodleUrl = token.iss
 
   const accessToken = await createSessionJwt(
     moodle_user_sub,
     moodle_course_id,
-    moodleUrl,
+    token.iss,
     req.headers['user-agent']
   )
 
-  return res.send(buildToolHtml(accessToken))
+  const redirect = `${env.frontendUrl}?token=${encodeURIComponent(accessToken)}`
+  return res.redirect(redirect)
 })
 
 // ─── Deep Linking ─────────────────────────────────────────────────────────────
@@ -96,25 +77,21 @@ Lti.onDeepLinking(async (token, req, res) => {
 export const startServer = async () => {
   await connectDatabase()
 
-  // Archivos estáticos — sin autenticación
-  Lti.app.use('/public', express.static(join(__dirname, '../public')))
-
   // Health check
   Lti.app.get('/ping', (req, res) => res.json({ ok: true, timestamp: Date.now() }))
 
-  // Panel desde botón flotante (JWT pre-firmado por launch.php → crear sesión aquí)
+  // Botón flotante: valida el JWT de launch.php, crea sesión, redirige al frontend
   Lti.app.get('/tool', async (req, res) => {
     const rawToken = req.query.token
-    if (!rawToken) return res.status(400).send('Token requerido.')
+    if (!rawToken) return res.status(400).json({ error: 'Token requerido.' })
 
     let payload
     try {
       payload = jwt.verify(rawToken, env.moodleSharedSecret, { algorithms: ['HS256'] })
     } catch {
-      return res.status(401).send('Token inválido o expirado.')
+      return res.status(401).json({ error: 'Token inválido o expirado.' })
     }
 
-    // Crear sesión y generar nuevo JWT que incluye session_id
     const accessToken = await createSessionJwt(
       String(payload.moodle_user_sub),
       payload.moodle_course_id ?? null,
@@ -122,10 +99,11 @@ export const startServer = async () => {
       req.headers['user-agent']
     )
 
-    return res.send(buildToolHtml(accessToken))
+    const redirect = `${env.frontendUrl}?token=${encodeURIComponent(accessToken)}`
+    return res.redirect(redirect)
   })
 
-  // ─── API v1 — protegida por JWT Bearer ────────────────────────────────────
+  // ─── API v1 ───────────────────────────────────────────────────────────────
   const v1 = express.Router()
   v1.use(tokenMiddleware)
   v1.use('/users', usersRoutes)
@@ -142,6 +120,7 @@ export const startServer = async () => {
   await registerPlatformIfNeeded()
 
   console.log(`[app] Servidor LTI corriendo en ${env.appUrl} (puerto ${env.port})`)
+  console.log(`[app] Frontend: ${env.frontendUrl || '(no configurado)'}`)
   console.log(`[app] Modo: ${env.nodeEnv}`)
 }
 
@@ -160,10 +139,7 @@ async function registerPlatformIfNeeded() {
     clientId: platform.clientId,
     authenticationEndpoint: platform.authEndpoint,
     accesstokenEndpoint: platform.tokenEndpoint,
-    authConfig: {
-      method: 'JWK_SET',
-      key: platform.keysetEndpoint,
-    },
+    authConfig: { method: 'JWK_SET', key: platform.keysetEndpoint },
   })
 
   console.log(`[app] Plataforma registrada: ${platform.name}`)

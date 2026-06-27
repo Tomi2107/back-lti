@@ -27,6 +27,8 @@ export const env = {
   ltiKey: process.env.LTI_KEY,
   mongodbUri: process.env.MONGODB_URI,
 
+  frontendUrl: process.env.FRONTEND_URL || '',
+
   moodleSharedSecret: process.env.MOODLE_SHARED_SECRET || 'change_me_insecure_default',
   moodleServiceToken: process.env.MOODLE_SERVICE_TOKEN || '',
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
