@@ -7,11 +7,11 @@ async function callMoodle(moodleUrl, wsfunction, params = {}) {
   url.searchParams.set('moodlerestformat', 'json')
 
   for (const [key, val] of Object.entries(params)) {
-    url.searchParams.set(key, val)
+    url.searchParams.set(key, String(val))
   }
 
   const res = await fetch(url.toString())
-  if (!res.ok) throw new Error(`Moodle API ${res.status}`)
+  if (!res.ok) throw new Error(`Moodle API HTTP ${res.status}`)
 
   const data = await res.json()
   if (data?.exception) throw new Error(data.message ?? 'Error en Moodle API')
@@ -19,8 +19,30 @@ async function callMoodle(moodleUrl, wsfunction, params = {}) {
   return data
 }
 
-export const getCourseModules = async (moodleUrl, courseId) => {
+export const getCourseContents = async (moodleUrl, courseId) => {
   return callMoodle(moodleUrl, 'core_course_get_contents', { courseid: courseId })
+}
+
+export const getActivityContent = async (moodleUrl, activityId) => {
+  // Intenta obtener el contenido del módulo por su ID
+  // Moodle no tiene un endpoint directo; buscamos en todos los cursos del módulo
+  try {
+    const data = await callMoodle(moodleUrl, 'core_course_get_contents', {
+      courseid: 0, // se ignora; usamos el cmid
+      options: JSON.stringify([{ name: 'cmid', value: activityId }]),
+    })
+
+    for (const section of data ?? []) {
+      for (const mod of section.modules ?? []) {
+        if (String(mod.id) === String(activityId)) {
+          return mod.description ?? mod.intro ?? ''
+        }
+      }
+    }
+  } catch {
+    // fallback vacío
+  }
+  return ''
 }
 
 export const getCompletionStatus = async (moodleUrl, courseId, userId) => {

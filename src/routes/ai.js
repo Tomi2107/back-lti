@@ -1,9 +1,8 @@
 import { Router } from 'express'
-import { summarizeText, simplifyText } from '../controllers/aiController.js'
+import { processAI } from '../controllers/aiController.js'
 
 const router = Router()
 
-router.post('/summarize', summarizeText)
-router.post('/simplify', simplifyText)
+router.post('/process/:activity_id', processAI)
 
 export default router

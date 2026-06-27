@@ -16,16 +16,13 @@ if (empty($toolurl) || empty($secret)) {
 
 global $USER, $COURSE;
 
+// moodle_user_sub: mismo valor que el claim `sub` que Moodle envía en el launch LTI 1.3
 $payload = [
-    'userId'      => (string) $USER->id,
-    'userEmail'   => $USER->email,
-    'userName'    => fullname($USER),
-    'courseId'    => (string) $COURSE->id,
-    'roles'       => local_accessibility_get_roles(),
-    'moodleUrl'   => $CFG->wwwroot,
-    'platformUrl' => $CFG->wwwroot,
-    'iat'         => time(),
-    'exp'         => time() + 3600, // válido 1 hora
+    'moodle_user_sub'  => (string) $USER->id,
+    'moodle_course_id' => (string) $COURSE->id,
+    'moodleUrl'        => $CFG->wwwroot,
+    'iat'              => time(),
+    'exp'              => time() + 3600,
 ];
 
 $token = local_accessibility_sign_token($payload, $secret);

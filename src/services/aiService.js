@@ -30,3 +30,17 @@ export const simplify = async (text) => {
   })
   return msg.content[0].text
 }
+
+export const extractKeyConcepts = async (text) => {
+  const msg = await client.messages.create({
+    model: 'claude-haiku-4-5',
+    max_tokens: 512,
+    messages: [
+      {
+        role: 'user',
+        content: `Identifica y lista los 5-8 conceptos clave más importantes del siguiente texto. Para cada concepto, escribe el término y una definición breve en una línea. Usa el formato: "• Término: definición breve". Responde solo con la lista, sin introducción ni comentarios adicionales.\n\n${text}`,
+      },
+    ],
+  })
+  return msg.content[0].text
+}
