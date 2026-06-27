@@ -1,64 +1,94 @@
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+import { readFileSync } from 'fs'
+import express from 'express'
+import jwt from 'jsonwebtoken'
 import { env } from './config/env.js'
-import accessibilityRoutes from './routes/accessibility.js'
-import authRoutes from './routes/auth.js'
-import contenidoRoutes from './routes/contenido.js'
-import progresoRoutes from './routes/progreso.js'
-import { Provider as Lti } from 'ltijs'
+import { connectDatabase } from './config/database.js'
+import Lti from 'ltijs'
+import { tokenMiddleware } from './middleware/tokenMiddleware.js'
+import preferencesRoutes from './routes/preferences.js'
+import aiRoutes from './routes/ai.js'
+import courseRoutes from './routes/course.js'
+import progressRoutes from './routes/progress.js'
 
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
-console.log('Lti:', Lti)
-console.log('setup:', typeof Lti.setup)
-
-// ─── Configurar ltijs ─────────────────────────────────────────────────────────
+// ─── Configura ltijs ──────────────────────────────────────────────────────────
 Lti.setup(
   env.ltiKey,
   { url: env.mongodbUri },
   {
     appUrl: env.appUrl,
-    devMode: env.isDev, // desactiva HTTPS en local; NUNCA en producción
+    devMode: env.isDev,
     cookies: {
-      secure: !env.isDev,      // HTTPS obligatorio en producción
-      sameSite: env.isDev ? 'Lax' : 'None', // 'None' necesario para iframes LTI
+      secure: !env.isDev,
+      sameSite: env.isDev ? 'Lax' : 'None',
     },
     cors: env.allowedOrigins.length ? env.allowedOrigins : false,
     ltiaas: false,
-  },
+  }
 )
 
-// ─── Callback de lanzamiento exitoso ─────────────────────────────────────────
+// ─── Inyecta el token JWT en el HTML para que el frontend lo use ──────────────
+function buildToolHtml(accessToken) {
+  const html = readFileSync(join(__dirname, '../views/tool.html'), 'utf-8')
+  return html.replace(
+    '</head>',
+    `<script>window.__A11Y_TOKEN__ = ${JSON.stringify(accessToken)};</script></head>`
+  )
+}
+
+// ─── Lanzamiento LTI exitoso → genera JWT y sirve el panel ───────────────────
 Lti.onConnect(async (token, req, res) => {
-  // token contiene user, roles, context, etc.
-  // Aquí puedes redirigir al frontend con el idToken o servir HTML directamente
-  return res.json({ launched: true, user: token?.user })
+  const payload = {
+    userId: token.user,
+    courseId: token.platformContext?.context?.id ?? null,
+    moodleUrl: token.iss,
+    platformUrl: token.iss,
+    roles: token.platformContext?.roles ?? [],
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 3600,
+  }
+  const accessToken = jwt.sign(payload, env.moodleSharedSecret, { algorithm: 'HS256' })
+  return res.send(buildToolHtml(accessToken))
 })
 
-// ─── Callback de Deep Linking ─────────────────────────────────────────────────
+// ─── Deep Linking ─────────────────────────────────────────────────────────────
 Lti.onDeepLinking(async (token, req, res) => {
   return Lti.DeepLinking.createDeepLinkingMessage(res, [], { message: 'Deep linking no configurado aún.' })
 })
 
-console.log('Router stack:')
-console.log(Lti.app._router?.stack?.map(x => x.name))
 // ─── Iniciar servidor ─────────────────────────────────────────────────────────
 export const startServer = async () => {
-  await Lti.deploy({ port: env.port })
+  await connectDatabase()
 
-  console.log('Express app:', !!Lti.app)
+  // Archivos estáticos — sin autenticación
+  Lti.app.use('/public', express.static(join(__dirname, '../public')))
 
-  Lti.app.get('/ping', (req, res) => {
-    res.json({
-      ok: true,
-      timestamp: Date.now()
-    })
+  // Health check
+  Lti.app.get('/ping', (req, res) => res.json({ ok: true, timestamp: Date.now() }))
+
+  // Panel desde el botón flotante (JWT en query param, generado por launch.php)
+  Lti.app.get('/tool', (req, res) => {
+    const token = req.query.token
+    if (!token) return res.status(400).send('Token requerido.')
+    try {
+      jwt.verify(token, env.moodleSharedSecret, { algorithms: ['HS256'] })
+      return res.send(buildToolHtml(token))
+    } catch {
+      return res.status(401).send('Token inválido o expirado.')
+    }
   })
 
-  // Registrar rutas en la app Express interna de ltijs
-  Lti.app.use('/api/accessibility', accessibilityRoutes)
-  Lti.app.use('/api/auth', authRoutes)
-  Lti.app.use('/api/contenido', contenidoRoutes)
-  Lti.app.use('/api/progreso', progresoRoutes)
+  // API protegida por JWT Bearer (ambos flujos: LTI y botón flotante)
+  Lti.app.use('/api/preferences', tokenMiddleware, preferencesRoutes)
+  Lti.app.use('/api/ai', tokenMiddleware, aiRoutes)
+  Lti.app.use('/api/course', tokenMiddleware, courseRoutes)
+  Lti.app.use('/api/progress', tokenMiddleware, progressRoutes)
 
-  // Registrar plataforma si aún no existe
+  await Lti.deploy({ port: env.port })
+
   await registerPlatformIfNeeded()
 
   console.log(`[app] Servidor LTI corriendo en ${env.appUrl} (puerto ${env.port})`)
