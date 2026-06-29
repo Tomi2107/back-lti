@@ -289,22 +289,93 @@ Devuelve una lista priorizada de actividades pendientes o en progreso. Ordena po
 ### `POST /api/v1/events`
 Registra una acción del usuario en `EventLog`. El `session_id` lo resuelve el backend desde el JWT — el frontend **nunca lo envía**.
 
-**Body**
+**Body estructura base**
 ```json
 {
-  "event_type": "SESSION_START" | "ACCESSIBILITY_CHANGED" | "TTS_INTERACTION" | "AI_COGNITIVE_REQUEST" | "TASK_COMPLETED",
-  "payload": { "feature": "font_size", "value": "20" },
+  "event_type": "<ver tabla>",
+  "payload": { "<campos según event_type>" },
   "resultado": "SUCCESS" | "FAILED" | "CANCELLED"
 }
 ```
 
-| Evento | Cuándo enviarlo |
-|---|---|
-| `SESSION_START` | Al montar el panel por primera vez |
-| `ACCESSIBILITY_CHANGED` | Al cambiar contraste, fuente o tamaño |
-| `TTS_INTERACTION` | Al iniciar o detener la lectura en voz alta |
-| `AI_COGNITIVE_REQUEST` | Al solicitar resumen, simplificación o conceptos clave |
-| `TASK_COMPLETED` | Al marcar una actividad como completada en el checklist |
+#### Schemas de payload por `event_type`
+
+**`SESSION_START`** — Al montar el panel por primera vez
+```json
+{ "payload": {} }
+```
+
+**`ACCESSIBILITY_CHANGED`** — Al cambiar contraste, fuente u otro ajuste visual
+```json
+{
+  "payload": {
+    "feature": "font_size" | "contrast_mode" | "font_family" | "line_height" | "word_spacing",
+    "previous_value": "16",
+    "new_value": "20"
+  }
+}
+```
+
+**`TTS_INTERACTION`** — Al iniciar, pausar o detener la lectura en voz alta
+```json
+{
+  "payload": {
+    "action": "play" | "pause" | "stop",
+    "activity_id": "892"
+  }
+}
+```
+
+**`AI_COGNITIVE_REQUEST`** — Al solicitar resumen, simplificación o conceptos clave
+```json
+{
+  "payload": {
+    "activity_id": "892",
+    "mode": "summary" | "simplify" | "key_concepts"
+  }
+}
+```
+
+**`PRESET_SELECTED`** — Al aplicar un preset de accesibilidad
+```json
+{
+  "payload": {
+    "preset_name": "dyslexia" | "low_vision" | "focus" | "custom"
+  }
+}
+```
+
+**`NAVIGATION_EVENT`** — Al navegar a una actividad del curso
+```json
+{
+  "payload": {
+    "to_activity_id": "893",
+    "course_id": "567"
+  }
+}
+```
+
+**`TASK_COMPLETED`** — Al marcar una actividad como completada en el checklist
+```json
+{
+  "payload": {
+    "activity_id": "892",
+    "previous_status": "PENDING" | "IN_PROGRESS",
+    "new_status": "COMPLETED"
+  }
+}
+```
+
+**`FOCUS_MODE_TOGGLED`** — Al activar o desactivar el modo foco
+```json
+{
+  "payload": {
+    "action": "start" | "stop",
+    "duration_seconds": 300
+  }
+}
+```
+> Nota: `duration_seconds` es requerido cuando `action` es `"stop"`. El backend actualiza automáticamente `focus_mode_total_seconds` en el documento `Session`.
 
 **Response `201`**
 ```json
@@ -322,8 +393,8 @@ Registra una acción del usuario en `EventLog`. El `session_id` lo resuelve el b
 | Colección | Descripción |
 |---|---|
 | `users` | Perfil y preferencias visuales del alumno |
-| `sessions` | Una sesión por apertura del panel (con `user_agent` y timestamps) |
-| `eventlogs` | Log transaccional de cada acción del usuario |
+| `sessions` | Una sesión por apertura del panel — incluye `user_agent`, `ip_address`, `city` (pendiente geo), `focus_mode_activated`, `focus_mode_total_seconds` |
+| `eventlogs` | Log transaccional de cada acción del usuario (8 event types con payload validado) |
 | `moodlecoursecaches` | Caché de contenido de Moodle (TTL 24h) |
 | `aicaches` | Caché de resultados de IA por hash SHA-256 del texto |
 | `userprogresses` | Estado de actividades por alumno (PENDING / IN_PROGRESS / COMPLETED) |

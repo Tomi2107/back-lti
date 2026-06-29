@@ -9,6 +9,10 @@ const SessionSchema = new Schema(
     started_at: { type: Date, default: Date.now },
     ended_at: { type: Date, default: null },
     user_agent: { type: String, default: '' },
+    ip_address: { type: String, default: null },
+    city: { type: String, default: null }, // pendiente: resolver via geolocalización de ip_address
+    focus_mode_activated: { type: Boolean, default: false },
+    focus_mode_total_seconds: { type: Number, default: 0 },
   },
   { _id: true }
 )

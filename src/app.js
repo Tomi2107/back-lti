@@ -31,7 +31,12 @@ Lti.setup(
 )
 
 // ─── Upsert usuario + crear sesión → devuelve JWT firmado ─────────────────────
-async function createSessionJwt(moodle_user_sub, moodle_course_id, moodleUrl, userAgent) {
+function extractIp(req) {
+  const forwarded = req.headers['x-forwarded-for']
+  return (forwarded ? forwarded.split(',')[0] : req.ip ?? '').trim() || null
+}
+
+async function createSessionJwt(moodle_user_sub, moodle_course_id, moodleUrl, userAgent, ipAddress) {
   await User.findOneAndUpdate(
     { moodle_user_sub },
     { $setOnInsert: { moodle_user_sub } },
@@ -39,7 +44,13 @@ async function createSessionJwt(moodle_user_sub, moodle_course_id, moodleUrl, us
   )
 
   const session_id = randomUUID()
-  await Session.create({ session_id, moodle_user_sub, moodle_course_id, user_agent: userAgent ?? '' })
+  await Session.create({
+    session_id,
+    moodle_user_sub,
+    moodle_course_id,
+    user_agent: userAgent ?? '',
+    ip_address: ipAddress ?? null,
+  })
 
   return jwt.sign(
     { moodle_user_sub, session_id, moodle_course_id, moodleUrl,
@@ -61,7 +72,8 @@ Lti.onConnect(async (token, req, res) => {
     moodle_user_sub,
     moodle_course_id,
     token.iss,
-    req.headers['user-agent']
+    req.headers['user-agent'],
+    extractIp(req)
   )
 
   const redirect = `${env.frontendUrl}?token=${encodeURIComponent(accessToken)}`
@@ -96,7 +108,8 @@ export const startServer = async () => {
       String(payload.moodle_user_sub),
       payload.moodle_course_id ?? null,
       payload.moodleUrl ?? null,
-      req.headers['user-agent']
+      req.headers['user-agent'],
+      extractIp(req)
     )
 
     const redirect = `${env.frontendUrl}?token=${encodeURIComponent(accessToken)}`

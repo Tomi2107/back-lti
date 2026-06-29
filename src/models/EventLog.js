@@ -8,7 +8,16 @@ const EventLogSchema = new Schema(
     event_type: {
       type: String,
       required: true,
-      enum: ['SESSION_START', 'ACCESSIBILITY_CHANGED', 'TTS_INTERACTION', 'AI_COGNITIVE_REQUEST', 'TASK_COMPLETED'],
+      enum: [
+        'SESSION_START',
+        'ACCESSIBILITY_CHANGED',
+        'TTS_INTERACTION',
+        'AI_COGNITIVE_REQUEST',
+        'PRESET_SELECTED',
+        'NAVIGATION_EVENT',
+        'TASK_COMPLETED',
+        'FOCUS_MODE_TOGGLED',
+      ],
     },
     payload: { type: Schema.Types.Mixed, default: {} },
     resultado: {
