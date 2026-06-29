@@ -1,5 +1,5 @@
 import { createHash } from 'crypto'
-import { AiCache } from '../models/AiCache.js'
+import { prisma } from '../lib/prisma.js'
 import { summarize, simplify, extractKeyConcepts } from '../services/aiService.js'
 
 const VALID_MODES = ['summary', 'simplify', 'key_concepts']
@@ -18,26 +18,23 @@ export const processAI = async (req, res) => {
   const trimmed = text.trim()
   const text_hash = createHash('sha256').update(trimmed).digest('hex')
 
-  // Consultar caché
-  const cached = await AiCache.findOne({ text_hash })
+  const cached = await prisma.aiCache.findUnique({ where: { text_hash } })
   const cacheField = mode === 'summary' ? 'generated_summary' : mode === 'simplify' ? 'simplified_text' : 'key_concepts'
 
   if (cached?.[cacheField]) {
     return res.json({ activity_id, mode, result: cached[cacheField], from_cache: true })
   }
 
-  // Llamar al LLM
   let result
   if (mode === 'summary') result = await summarize(trimmed)
   else if (mode === 'simplify') result = await simplify(trimmed)
   else result = await extractKeyConcepts(trimmed)
 
-  // Guardar en caché
-  await AiCache.findOneAndUpdate(
-    { text_hash },
-    { $set: { activity_id, text_hash, [cacheField]: result } },
-    { upsert: true }
-  )
+  await prisma.aiCache.upsert({
+    where: { text_hash },
+    update: { [cacheField]: result },
+    create: { text_hash, activity_id, [cacheField]: result },
+  })
 
   return res.json({ activity_id, mode, result, from_cache: false })
 }

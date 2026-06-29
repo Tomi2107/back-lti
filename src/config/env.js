@@ -2,7 +2,11 @@ import 'dotenv/config'
 
 const required = [
   'LTI_KEY',
-  'MONGODB_URI',
+  'DATABASE_URL',
+  'PG_DATABASE',
+  'PG_USER',
+  'PG_PASSWORD',
+  'PG_HOST',
   'APP_URL',
   'PLATFORM_URL',
   'PLATFORM_CLIENT_ID',
@@ -25,7 +29,16 @@ export const env = {
   appUrl: process.env.APP_URL,
 
   ltiKey: process.env.LTI_KEY,
-  mongodbUri: process.env.MONGODB_URI,
+
+  // Postgres — usado por Prisma (DATABASE_URL) y por ltijs-sequelize (PG_*)
+  databaseUrl: process.env.DATABASE_URL,
+  pg: {
+    database: process.env.PG_DATABASE,
+    user: process.env.PG_USER,
+    password: process.env.PG_PASSWORD,
+    host: process.env.PG_HOST,
+    port: parseInt(process.env.PG_PORT || '5432', 10),
+  },
 
   frontendUrl: process.env.FRONTEND_URL || '',
 

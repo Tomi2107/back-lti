@@ -1,19 +1,15 @@
-import { EventLog } from '../models/EventLog.js'
-import { Session } from '../models/Session.js'
+import { prisma } from '../lib/prisma.js'
 
 const VALID_RESULTADOS = ['SUCCESS', 'FAILED', 'CANCELLED']
-
-// ─── Schemas de payload por event_type ───────────────────────────────────────
-// Cada entrada define los campos requeridos y sus valores válidos (si aplica).
 
 const PAYLOAD_SCHEMAS = {
   SESSION_START: {
     required: [],
   },
   ACCESSIBILITY_CHANGED: {
-    required: ['feature', 'previous_value', 'new_value'],
+    required: ['adjustment_type', 'old_value', 'new_value'],
     enums: {
-      feature: ['font_size', 'contrast_mode', 'font_family', 'line_height', 'word_spacing'],
+      adjustment_type: ['font_size', 'contrast_mode', 'font_family', 'spacing', 'color_palette'],
     },
   },
   TTS_INTERACTION: {
@@ -23,26 +19,22 @@ const PAYLOAD_SCHEMAS = {
     },
   },
   AI_COGNITIVE_REQUEST: {
-    required: ['activity_id', 'mode'],
+    required: ['request_type', 'activity_id'],
     enums: {
-      mode: ['summary', 'simplify', 'key_concepts'],
+      request_type: ['summary', 'simplify', 'key_concepts'],
     },
   },
   PRESET_SELECTED: {
     required: ['preset_name'],
-    enums: {
-      preset_name: ['dyslexia', 'low_vision', 'focus', 'custom'],
-    },
   },
   NAVIGATION_EVENT: {
-    required: ['to_activity_id', 'course_id'],
+    required: ['destination'],
+    enums: {
+      destination: ['mi_progreso', 'proximos_pasos', 'navegacion_clara', 'inicio', 'curso', 'actividad'],
+    },
   },
   TASK_COMPLETED: {
-    required: ['activity_id', 'previous_status', 'new_status'],
-    enums: {
-      previous_status: ['PENDING', 'IN_PROGRESS'],
-      new_status: ['COMPLETED'],
-    },
+    required: ['activity_id', 'moodle_course_id'],
   },
   FOCUS_MODE_TOGGLED: {
     required: ['action'],
@@ -75,10 +67,8 @@ function validatePayload(event_type, payload) {
   return errors.length ? { valid: false, error: errors.join(' | ') } : { valid: true }
 }
 
-// ─── Handler ──────────────────────────────────────────────────────────────────
-
 export const logEvent = async (req, res) => {
-  const { session_id } = res.locals.moodleUser
+  const { session_id, moodle_course_id } = res.locals.moodleUser
   const { event_type, payload = {}, resultado } = req.body
 
   if (!PAYLOAD_SCHEMAS[event_type]) {
@@ -98,24 +88,32 @@ export const logEvent = async (req, res) => {
     return res.status(400).json({ error: validation.error })
   }
 
-  // Actualizar sesión cuando se registra foco
+  // Inyectar moodle_course_id en payloads que lo requieren para analytics
+  const enrichedPayload = { ...payload }
+  if (['AI_COGNITIVE_REQUEST', 'TTS_INTERACTION', 'TASK_COMPLETED'].includes(event_type)) {
+    if (!enrichedPayload.moodle_course_id) enrichedPayload.moodle_course_id = moodle_course_id ?? null
+  }
+
+  // Actualizar sesión cuando se activa/desactiva modo foco
   if (event_type === 'FOCUS_MODE_TOGGLED' && resultado === 'SUCCESS') {
     if (payload.action === 'start') {
-      await Session.findOneAndUpdate({ session_id }, { $set: { focus_mode_activated: true } })
+      await prisma.session.update({ where: { session_id }, data: { focus_mode_activated: true } })
     } else if (payload.action === 'stop' && typeof payload.duration_seconds === 'number') {
-      await Session.findOneAndUpdate(
-        { session_id },
-        { $inc: { focus_mode_total_seconds: payload.duration_seconds } }
-      )
+      await prisma.session.update({
+        where: { session_id },
+        data: { focus_mode_total_seconds: { increment: payload.duration_seconds } },
+      })
     }
   }
 
-  const event = await EventLog.create({
-    session_id,
-    event_type,
-    payload,
-    resultado,
-    timestamp: new Date(),
+  const event = await prisma.eventLog.create({
+    data: {
+      session_id,
+      event_type,
+      payload: enrichedPayload,
+      resultado,
+      timestamp: new Date(),
+    },
   })
 
   return res.status(201).json({

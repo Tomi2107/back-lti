@@ -1,7 +1,5 @@
 import { getCourseContents } from '../services/moodleService.js'
-import { MoodleCourseCache } from '../models/MoodleCourseCache.js'
-
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24 horas
+import { prisma } from '../lib/prisma.js'
 
 export const getCourseStructure = async (req, res) => {
   const { course_id } = req.params
@@ -11,7 +9,6 @@ export const getCourseStructure = async (req, res) => {
 
   const sections = await getCourseContents(moodleUrl, course_id)
 
-  // Cachear contenido de cada módulo en paralelo
   const now = new Date()
   const cacheOps = []
 
@@ -19,11 +16,11 @@ export const getCourseStructure = async (req, res) => {
     for (const mod of section.modules ?? []) {
       const content = mod.description ?? mod.intro ?? ''
       cacheOps.push(
-        MoodleCourseCache.findOneAndUpdate(
-          { activity_id: String(mod.id) },
-          { $set: { moodle_course_id: String(course_id), content_text_raw: content, updated_at: now } },
-          { upsert: true }
-        )
+        prisma.moodleCourseCache.upsert({
+          where: { activity_id: String(mod.id) },
+          update: { moodle_course_id: String(course_id), content_text_raw: content, updated_at: now },
+          create: { activity_id: String(mod.id), moodle_course_id: String(course_id), content_text_raw: content },
+        })
       )
     }
   }

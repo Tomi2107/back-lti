@@ -3,9 +3,9 @@ import express from 'express'
 import jwt from 'jsonwebtoken'
 import { env } from './config/env.js'
 import { connectDatabase } from './config/database.js'
+import { prisma } from './lib/prisma.js'
 import Lti from 'ltijs'
-import { User } from './models/User.js'
-import { Session } from './models/Session.js'
+import Database from 'ltijs-sequelize'
 import { tokenMiddleware } from './middleware/tokenMiddleware.js'
 import usersRoutes from './routes/users.js'
 import coursesRoutes from './routes/courses.js'
@@ -14,10 +14,18 @@ import aiRoutes from './routes/ai.js'
 import progressRoutes from './routes/progress.js'
 import eventsRoutes from './routes/events.js'
 
+// ─── ltijs-sequelize: base de datos interna de LTI (plataformas, tokens, etc.) ─
+const ltiDb = new Database(env.pg.database, env.pg.user, env.pg.password, {
+  host: env.pg.host,
+  port: env.pg.port,
+  dialect: 'postgres',
+  logging: false,
+})
+
 // ─── Configura ltijs ──────────────────────────────────────────────────────────
 Lti.setup(
   env.ltiKey,
-  { url: env.mongodbUri },
+  { plugin: ltiDb },
   {
     appUrl: env.appUrl,
     devMode: env.isDev,
@@ -30,32 +38,39 @@ Lti.setup(
   }
 )
 
-// ─── Upsert usuario + crear sesión → devuelve JWT firmado ─────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function extractIp(req) {
   const forwarded = req.headers['x-forwarded-for']
   return (forwarded ? forwarded.split(',')[0] : req.ip ?? '').trim() || null
 }
 
 async function createSessionJwt(moodle_user_sub, moodle_course_id, moodleUrl, userAgent, ipAddress) {
-  await User.findOneAndUpdate(
-    { moodle_user_sub },
-    { $setOnInsert: { moodle_user_sub } },
-    { upsert: true, new: true }
-  )
+  await prisma.user.upsert({
+    where: { moodle_user_sub },
+    update: {},
+    create: { moodle_user_sub },
+  })
 
   const session_id = randomUUID()
-  await Session.create({
-    session_id,
-    moodle_user_sub,
-    moodle_course_id,
-    user_agent: userAgent ?? '',
-    ip_address: ipAddress ?? null,
+  await prisma.session.create({
+    data: {
+      session_id,
+      moodle_user_sub,
+      moodle_course_id: moodle_course_id ?? null,
+      user_agent: userAgent ?? '',
+      ip_address: ipAddress ?? null,
+    },
   })
 
   return jwt.sign(
-    { moodle_user_sub, session_id, moodle_course_id, moodleUrl,
+    {
+      moodle_user_sub,
+      session_id,
+      moodle_course_id,
+      moodleUrl,
       iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 3600 },
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    },
     env.moodleSharedSecret,
     { algorithm: 'HS256' }
   )
@@ -76,8 +91,7 @@ Lti.onConnect(async (token, req, res) => {
     extractIp(req)
   )
 
-  const redirect = `${env.frontendUrl}?token=${encodeURIComponent(accessToken)}`
-  return res.redirect(redirect)
+  return res.redirect(`${env.frontendUrl}?token=${encodeURIComponent(accessToken)}`)
 })
 
 // ─── Deep Linking ─────────────────────────────────────────────────────────────
@@ -112,8 +126,7 @@ export const startServer = async () => {
       extractIp(req)
     )
 
-    const redirect = `${env.frontendUrl}?token=${encodeURIComponent(accessToken)}`
-    return res.redirect(redirect)
+    return res.redirect(`${env.frontendUrl}?token=${encodeURIComponent(accessToken)}`)
   })
 
   // ─── API v1 ───────────────────────────────────────────────────────────────

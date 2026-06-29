@@ -1,12 +1,16 @@
-import { UserProgress } from '../models/UserProgress.js'
+import { prisma } from '../lib/prisma.js'
 
 export const getProgress = async (req, res) => {
   const { moodle_user_sub } = res.locals.moodleUser
   const { course_id } = req.query
 
-  const filter = { moodle_user_sub }
-  // course_id es informativo; UserProgress no almacena course_id pero puede filtrarse si se añade
-  const items = await UserProgress.find(filter).sort({ due_date: 1, last_interaction_timestamp: -1 })
+  const where = { moodle_user_sub }
+  if (course_id) where.moodle_course_id = course_id
+
+  const items = await prisma.userProgress.findMany({
+    where,
+    orderBy: [{ due_date: 'asc' }, { last_interaction_timestamp: 'desc' }],
+  })
 
   const total = items.length
   const completed = items.filter((i) => i.status === 'COMPLETED').length
@@ -34,11 +38,11 @@ export const updateProgress = async (req, res) => {
     return res.status(400).json({ error: `status debe ser uno de: ${VALID.join(', ')}` })
   }
 
-  const item = await UserProgress.findOneAndUpdate(
-    { moodle_user_sub, moodle_activity_id: activity_id },
-    { $set: { status, last_interaction_timestamp: new Date() } },
-    { upsert: true, new: true, runValidators: true }
-  )
+  const item = await prisma.userProgress.upsert({
+    where: { moodle_user_sub_moodle_activity_id: { moodle_user_sub, moodle_activity_id: activity_id } },
+    update: { status, last_interaction_timestamp: new Date() },
+    create: { moodle_user_sub, moodle_activity_id: activity_id, status, last_interaction_timestamp: new Date() },
+  })
 
   return res.json({
     moodle_activity_id: item.moodle_activity_id,
@@ -50,13 +54,16 @@ export const updateProgress = async (req, res) => {
 export const getSuggestions = async (req, res) => {
   const { moodle_user_sub } = res.locals.moodleUser
   const limit = Math.min(parseInt(req.query.limit ?? '5', 10), 20)
+  const { course_id } = req.query
 
-  const items = await UserProgress.find({
-    moodle_user_sub,
-    status: { $in: ['PENDING', 'IN_PROGRESS'] },
+  const where = { moodle_user_sub, status: { in: ['PENDING', 'IN_PROGRESS'] } }
+  if (course_id) where.moodle_course_id = course_id
+
+  const items = await prisma.userProgress.findMany({
+    where,
+    orderBy: [{ due_date: 'asc' }, { last_interaction_timestamp: 'desc' }],
+    take: limit,
   })
-    .sort({ due_date: 1, last_interaction_timestamp: -1 })
-    .limit(limit)
 
   return res.json({
     suggestions: items.map((item, idx) => ({

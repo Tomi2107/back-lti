@@ -172,7 +172,21 @@ MOODLE_SERVICE_TOKEN=<generado en Gestionar tokens de Moodle>
 # IA
 ANTHROPIC_API_KEY=sk-ant-...
 
-# Base de datos
-MONGODB_URI=mongodb://...
+# Base de datos — PostgreSQL
+DATABASE_URL=postgresql://user:password@host:5432/lti_accessibility
+PG_HOST=host
+PG_PORT=5432
+PG_DATABASE=lti_accessibility
+PG_USER=user
+PG_PASSWORD=password
 LTI_KEY=<64 chars hex aleatorios>
+```
+
+## Primera vez — crear las tablas
+
+Después de configurar el `.env`, correr las migraciones para crear todas las tablas en Postgres:
+
+```bash
+npm run db:migrate:dev   # desarrollo (crea migration files)
+npm run db:migrate       # producción (aplica migrations existentes)
 ```
