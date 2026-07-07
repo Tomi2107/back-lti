@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken'
 import { env } from './config/env.js'
 import { connectDatabase } from './config/database.js'
 import { prisma } from './lib/prisma.js'
-import Lti from 'ltijs'
+import { Provider as Lti } from 'ltijs'
 import Database from 'ltijs-sequelize'
 import { tokenMiddleware } from './middleware/tokenMiddleware.js'
 import usersRoutes from './routes/users.js'
@@ -37,6 +37,14 @@ Lti.setup(
     ltiaas: false,
   }
 )
+
+// Ping sin auth — lo insertamos al frente del stack de Express para que corra
+// antes del middleware de autenticación que ltijs agrega globalmente
+Lti.app.use('/ping', (req, res) => {
+  res.setHeader('Content-Type', 'application/json')
+  res.end(JSON.stringify({ ok: true, timestamp: Date.now() }))
+})
+Lti.app._router.stack.unshift(Lti.app._router.stack.pop())
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function extractIp(req) {
@@ -103,10 +111,31 @@ Lti.onDeepLinking(async (token, req, res) => {
 export const startServer = async () => {
   await connectDatabase()
 
-  // Health check
-  Lti.app.get('/ping', (req, res) => res.json({ ok: true, timestamp: Date.now() }))
+  // Botón flotante — flujo iframe/AJAX: valida pre-auth JWT y devuelve session JWT como JSON
+  // El plugin de Moodle llama esto vía fetch(), nunca navega la página
+  Lti.app.post('/tool/token', async (req, res) => {
+    const rawToken = req.body?.preauth_token
+    if (!rawToken) return res.status(400).json({ error: 'preauth_token requerido.' })
 
-  // Botón flotante: valida el JWT de launch.php, crea sesión, redirige al frontend
+    let payload
+    try {
+      payload = jwt.verify(rawToken, env.moodleSharedSecret, { algorithms: ['HS256'] })
+    } catch {
+      return res.status(401).json({ error: 'Token inválido o expirado.' })
+    }
+
+    const sessionToken = await createSessionJwt(
+      String(payload.moodle_user_sub),
+      payload.moodle_course_id ?? null,
+      payload.moodleUrl ?? null,
+      req.headers['user-agent'],
+      extractIp(req)
+    )
+
+    return res.json({ session_token: sessionToken, frontend_url: env.frontendUrl })
+  })
+
+  // Compatibilidad: GET /tool sigue funcionando para flujos no-iframe (deep link, testing)
   Lti.app.get('/tool', async (req, res) => {
     const rawToken = req.query.token
     if (!rawToken) return res.status(400).json({ error: 'Token requerido.' })
