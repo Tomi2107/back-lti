@@ -111,6 +111,15 @@ Lti.onDeepLinking(async (token, req, res) => {
 export const startServer = async () => {
   await connectDatabase()
 
+  // ─── Endpoint de desarrollo: genera token sin Moodle (solo NODE_ENV=development) ─
+  if (env.isDev) {
+    Lti.app.post('/dev/token', async (req, res) => {
+      const { moodle_user_sub = 'qa-user', moodle_course_id = '1', moodleUrl = 'http://localhost' } = req.body ?? {}
+      const token = await createSessionJwt(moodle_user_sub, moodle_course_id, moodleUrl, 'QA/dev', extractIp(req))
+      return res.json({ token, note: 'Token de desarrollo — no usar en producción' })
+    })
+  }
+
   // Botón flotante — flujo iframe/AJAX: valida pre-auth JWT y devuelve session JWT como JSON
   // El plugin de Moodle llama esto vía fetch(), nunca navega la página
   Lti.app.post('/tool/token', async (req, res) => {
