@@ -38,13 +38,22 @@ Lti.setup(
   }
 )
 
-// Ping sin auth — lo insertamos al frente del stack de Express para que corra
-// antes del middleware de autenticación que ltijs agrega globalmente
+// Rutas sin auth — insertadas al frente del stack antes del middleware de ltijs
 Lti.app.use('/ping', (req, res) => {
   res.setHeader('Content-Type', 'application/json')
   res.end(JSON.stringify({ ok: true, timestamp: Date.now() }))
 })
 Lti.app._router.stack.unshift(Lti.app._router.stack.pop())
+
+if ((process.env.NODE_ENV || 'development') === 'development') {
+  Lti.app.post('/dev/token', express.json(), async (req, res) => {
+    const { moodle_user_sub = 'qa-user', moodle_course_id = '1', moodleUrl = 'http://localhost' } = req.body ?? {}
+    const token = await createSessionJwt(moodle_user_sub, moodle_course_id, moodleUrl, 'QA/dev', null)
+    res.setHeader('Content-Type', 'application/json')
+    res.end(JSON.stringify({ token, note: 'Token de desarrollo — no usar en producción' }))
+  })
+  Lti.app._router.stack.unshift(Lti.app._router.stack.pop())
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function extractIp(req) {
@@ -110,15 +119,6 @@ Lti.onDeepLinking(async (token, req, res) => {
 // ─── Iniciar servidor ─────────────────────────────────────────────────────────
 export const startServer = async () => {
   await connectDatabase()
-
-  // ─── Endpoint de desarrollo: genera token sin Moodle (solo NODE_ENV=development) ─
-  if (env.isDev) {
-    Lti.app.post('/dev/token', async (req, res) => {
-      const { moodle_user_sub = 'qa-user', moodle_course_id = '1', moodleUrl = 'http://localhost' } = req.body ?? {}
-      const token = await createSessionJwt(moodle_user_sub, moodle_course_id, moodleUrl, 'QA/dev', extractIp(req))
-      return res.json({ token, note: 'Token de desarrollo — no usar en producción' })
-    })
-  }
 
   // Botón flotante — flujo iframe/AJAX: valida pre-auth JWT y devuelve session JWT como JSON
   // El plugin de Moodle llama esto vía fetch(), nunca navega la página
