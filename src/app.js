@@ -15,7 +15,13 @@ import progressRoutes from './routes/progress.js'
 import eventsRoutes from './routes/events.js'
 
 import os from 'os'
-import { prisma } from './lib/prisma.js'
+
+const users = await prisma.user.count()
+
+report.checks.prisma = {
+  status: "OK",
+  users
+}
 
 Lti.app.get('/health', async (req, res) => {
   const report = {
