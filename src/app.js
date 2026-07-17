@@ -14,6 +14,50 @@ import aiRoutes from './routes/ai.js'
 import progressRoutes from './routes/progress.js'
 import eventsRoutes from './routes/events.js'
 
+import os from 'os'
+import { prisma } from './lib/prisma.js'
+
+Lti.app.get('/health', async (req, res) => {
+  const report = {
+    backend: 'OK',
+    timestamp: new Date().toISOString(),
+    checks: {}
+  }
+
+  // Variables de entorno
+  report.checks.env = {
+    APP_URL: !!env.appUrl,
+    DATABASE_URL: !!env.databaseUrl,
+    LTI_KEY: !!env.ltiKey,
+    MOODLE_SHARED_SECRET: !!env.moodleSharedSecret,
+    FRONTEND_URL: !!env.frontendUrl
+  }
+
+  // Base de datos
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    report.checks.database = 'OK'
+  } catch (e) {
+    report.checks.database = e.message
+  }
+
+  // Frontend
+  report.checks.frontend = env.frontendUrl
+
+  // Plataforma Moodle
+  report.checks.platform = {
+    url: env.platform.url,
+    clientId: env.platform.clientId
+  }
+
+  // Sistema
+  report.checks.server = {
+    node: process.version,
+    hostname: os.hostname()
+  }
+
+  res.json(report)
+})
 // ─── ltijs-sequelize: base de datos interna de LTI (plataformas, tokens, etc.) ─
 const ltiDb = new Database(env.pg.database, env.pg.user, env.pg.password, {
   host: env.pg.host,
