@@ -16,58 +16,6 @@ import eventsRoutes from './routes/events.js'
 
 import os from 'os'
 
-Lti.app.get('/health', async (req, res) => {
-  const report = {
-    backend: 'OK',
-    timestamp: new Date().toISOString(),
-    checks: {}
-  }
-
-  // Variables
-  report.checks.env = {
-    APP_URL: !!env.appUrl,
-    DATABASE_URL: !!env.databaseUrl,
-    LTI_KEY: !!env.ltiKey,
-    MOODLE_SHARED_SECRET: !!env.moodleSharedSecret,
-    FRONTEND_URL: !!env.frontendUrl
-  }
-
-  // Base de datos
-  try {
-    await prisma.$queryRaw`SELECT 1`
-
-    const users = await prisma.user.count()
-    const sessions = await prisma.session.count()
-
-    report.checks.database = "OK"
-
-    report.checks.prisma = {
-      users,
-      sessions
-    }
-
-  } catch (e) {
-    report.checks.database = e.message
-  }
-
-  // Plataforma
-  report.checks.platform = {
-    url: env.platform.url,
-    clientId: env.platform.clientId
-  }
-
-  // Frontend
-  report.checks.frontend = env.frontendUrl
-
-  // Servidor
-  report.checks.server = {
-    node: process.version,
-    hostname: os.hostname()
-  }
-
-  res.json(report)
-})
-
 // ─── ltijs-sequelize: base de datos interna de LTI (plataformas, tokens, etc.) ─
 const ltiDb = new Database(env.pg.database, env.pg.user, env.pg.password, {
   host: env.pg.host,
@@ -262,3 +210,55 @@ async function registerPlatformIfNeeded() {
 
   console.log(`[app] Plataforma registrada: ${platform.name}`)
 }
+
+Lti.app.get('/health', async (req, res) => {
+  const report = {
+    backend: 'OK',
+    timestamp: new Date().toISOString(),
+    checks: {}
+  }
+
+  // Variables
+  report.checks.env = {
+    APP_URL: !!env.appUrl,
+    DATABASE_URL: !!env.databaseUrl,
+    LTI_KEY: !!env.ltiKey,
+    MOODLE_SHARED_SECRET: !!env.moodleSharedSecret,
+    FRONTEND_URL: !!env.frontendUrl
+  }
+
+  // Base de datos
+  try {
+    await prisma.$queryRaw`SELECT 1`
+
+    const users = await prisma.user.count()
+    const sessions = await prisma.session.count()
+
+    report.checks.database = "OK"
+
+    report.checks.prisma = {
+      users,
+      sessions
+    }
+
+  } catch (e) {
+    report.checks.database = e.message
+  }
+
+  // Plataforma
+  report.checks.platform = {
+    url: env.platform.url,
+    clientId: env.platform.clientId
+  }
+
+  // Frontend
+  report.checks.frontend = env.frontendUrl
+
+  // Servidor
+  report.checks.server = {
+    node: process.version,
+    hostname: os.hostname()
+  }
+
+  res.json(report)
+})
