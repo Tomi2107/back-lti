@@ -16,13 +16,6 @@ import eventsRoutes from './routes/events.js'
 
 import os from 'os'
 
-const users = await prisma.user.count()
-
-report.checks.prisma = {
-  status: "OK",
-  users
-}
-
 Lti.app.get('/health', async (req, res) => {
   const report = {
     backend: 'OK',
@@ -30,7 +23,7 @@ Lti.app.get('/health', async (req, res) => {
     checks: {}
   }
 
-  // Variables de entorno
+  // Variables
   report.checks.env = {
     APP_URL: !!env.appUrl,
     DATABASE_URL: !!env.databaseUrl,
@@ -42,21 +35,31 @@ Lti.app.get('/health', async (req, res) => {
   // Base de datos
   try {
     await prisma.$queryRaw`SELECT 1`
-    report.checks.database = 'OK'
+
+    const users = await prisma.user.count()
+    const sessions = await prisma.session.count()
+
+    report.checks.database = "OK"
+
+    report.checks.prisma = {
+      users,
+      sessions
+    }
+
   } catch (e) {
     report.checks.database = e.message
   }
 
-  // Frontend
-  report.checks.frontend = env.frontendUrl
-
-  // Plataforma Moodle
+  // Plataforma
   report.checks.platform = {
     url: env.platform.url,
     clientId: env.platform.clientId
   }
 
-  // Sistema
+  // Frontend
+  report.checks.frontend = env.frontendUrl
+
+  // Servidor
   report.checks.server = {
     node: process.version,
     hostname: os.hostname()
@@ -64,6 +67,7 @@ Lti.app.get('/health', async (req, res) => {
 
   res.json(report)
 })
+
 // ─── ltijs-sequelize: base de datos interna de LTI (plataformas, tokens, etc.) ─
 const ltiDb = new Database(env.pg.database, env.pg.user, env.pg.password, {
   host: env.pg.host,
