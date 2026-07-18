@@ -42,37 +42,6 @@ export const init = (config) => {
 
 // ─── DOM ──────────────────────────────────────────────────────────────────────
 
-function injectDOM(launchUrl) {
-  const btn = document.createElement('button')
-  btn.id = 'a11y-fab'
-  btn.setAttribute('aria-label', 'Abrir herramientas de accesibilidad')
-  btn.setAttribute('aria-expanded', 'false')
-  btn.setAttribute('aria-haspopup', 'dialog')
-  btn.innerHTML = '<span aria-hidden="true">&#9855;</span>'
-
-  const modal = document.createElement('div')
-  modal.id = 'a11y-panel'
-  modal.setAttribute('role', 'dialog')
-  modal.setAttribute('aria-modal', 'true')
-  modal.setAttribute('aria-label', 'Panel de accesibilidad')
-  modal.hidden = true
-  modal.innerHTML = `
-    <div class="a11y-panel-inner">
-      <button class="a11y-close" aria-label="Cerrar panel">&times;</button>
-      <iframe id="a11y-iframe"
-        title="Herramientas de accesibilidad"
-        frameborder="0"
-        allow="autoplay"
-        src="">
-      </iframe>
-    </div>
-  `
-
-  document.body.appendChild(btn)
-  document.body.appendChild(modal)
-
-  return { btn, modal, iframe: modal.querySelector('#a11y-iframe') }
-}
 
 // ─── postMessage: aplicar configuración a la página Moodle ───────────────────
 

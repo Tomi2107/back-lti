@@ -15,9 +15,11 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { join, basename } from 'path'
 import { minify } from 'terser'
+import { fileURLToPath } from 'url' // <-- 1. Importamos esta función necesaria
 
-const SRC  = new URL('./amd/src',   import.meta.url).pathname
-const DEST = new URL('./amd/build', import.meta.url).pathname
+// <-- 2. Convertimos de forma segura las URLs de archivo a rutas nativas de tu sistema
+const SRC  = fileURLToPath(new URL('./amd/src', import.meta.url))
+const DEST = fileURLToPath(new URL('./amd/build', import.meta.url))
 
 mkdirSync(DEST, { recursive: true })
 

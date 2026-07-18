@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto'
 import express from 'express'
+import cors from 'cors'
 import jwt from 'jsonwebtoken'
 import { env } from './config/env.js'
 import { connectDatabase } from './config/database.js'
@@ -14,7 +15,37 @@ import aiRoutes from './routes/ai.js'
 import progressRoutes from './routes/progress.js'
 import eventsRoutes from './routes/events.js'
 
+
 import os from 'os'
+
+const corsOptions = {
+  origin: function(origin, callback){
+
+    const allowed = [
+      'https://traitor-caucus-hunchback.ngrok-free.dev',
+      env.frontendUrl
+    ].filter(Boolean);
+
+
+    if(!origin || allowed.includes(origin)){
+      callback(null,true);
+    }else{
+      callback(new Error('CORS bloqueado: '+origin));
+    }
+
+  },
+
+  methods:[
+    'GET',
+    'POST',
+    'OPTIONS'
+  ],
+
+  allowedHeaders:[
+    'Content-Type',
+    'Authorization'
+  ]
+}
 
 // ─── ltijs-sequelize: base de datos interna de LTI (plataformas, tokens, etc.) ─
 const ltiDb = new Database(env.pg.database, env.pg.user, env.pg.password, {
@@ -39,6 +70,9 @@ Lti.setup(
     ltiaas: false,
   }
 )
+
+Lti.app.use(cors(corsOptions))
+Lti.app.use(express.json())
 
 // Rutas sin auth — insertadas al frente del stack antes del middleware de ltijs
 Lti.app.use('/ping', (req, res) => {
@@ -169,6 +203,24 @@ export const startServer = async () => {
     return res.redirect(`${env.frontendUrl}?token=${encodeURIComponent(accessToken)}`)
   })
 
+  Lti.app.get('/config',(req,res)=>{
+
+  res.json({
+
+    tool:'FARO',
+
+    version:'1.0',
+
+    features:{
+      reading:true,
+      contrast:true,
+      profiles:true,
+      summary:true
+    }
+
+  })
+
+})
   // ─── API v1 ───────────────────────────────────────────────────────────────
   const v1 = express.Router()
   v1.use(tokenMiddleware)
