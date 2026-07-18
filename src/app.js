@@ -80,22 +80,22 @@ Lti.app.use('/ping', (req, res) => {
   res.end(JSON.stringify({ ok: true, timestamp: Date.now() }))
 })
 
-Lti.app.get('/config',(req,res)=>{
+Lti.app.get('/config', (req, res) => {
 
-res.json({
+  res.setHeader('Content-Type', 'application/json');
 
-  tool:'FARO',
+  res.end(JSON.stringify({
+    tool: 'FARO',
+    version: '1.0',
+    features: {
+      reading: true,
+      contrast: true,
+      profiles: true,
+      summary: true
+    }
+  }));
 
-  version:'1.0',
-
-  features:{
-    reading:true,
-    contrast:true,
-    profiles:true,
-    summary:true
-  }})
-
-})
+});
 
 Lti.app._router.stack.unshift(Lti.app._router.stack.pop())
 
