@@ -79,6 +79,24 @@ Lti.app.use('/ping', (req, res) => {
   res.setHeader('Content-Type', 'application/json')
   res.end(JSON.stringify({ ok: true, timestamp: Date.now() }))
 })
+
+Lti.app.get('/config',(req,res)=>{
+
+res.json({
+
+  tool:'FARO',
+
+  version:'1.0',
+
+  features:{
+    reading:true,
+    contrast:true,
+    profiles:true,
+    summary:true
+  }})
+
+})
+
 Lti.app._router.stack.unshift(Lti.app._router.stack.pop())
 
 if ((process.env.NODE_ENV || 'development') === 'development') {
@@ -203,24 +221,7 @@ export const startServer = async () => {
     return res.redirect(`${env.frontendUrl}?token=${encodeURIComponent(accessToken)}`)
   })
 
-  Lti.app.get('/config',(req,res)=>{
 
-  res.json({
-
-    tool:'FARO',
-
-    version:'1.0',
-
-    features:{
-      reading:true,
-      contrast:true,
-      profiles:true,
-      summary:true
-    }
-
-  })
-
-})
   // ─── API v1 ───────────────────────────────────────────────────────────────
   const v1 = express.Router()
   v1.use(tokenMiddleware)
