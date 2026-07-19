@@ -71,7 +71,9 @@ Lti.setup(
   }
 )
 
-Lti.app.use(cors(corsOptions))
+Lti.app.use(cors({
+  origin: 'https://traitor-caucus-hunchback.ngrok-free.dev' // El dominio donde está instalado tu Moodle
+}));
 Lti.app.use(express.json())
 
 // Rutas sin auth — insertadas al frente del stack antes del middleware de ltijs
