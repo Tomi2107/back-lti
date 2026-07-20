@@ -264,7 +264,7 @@ app.post('/tool/token', async (req, res) => {
   v1.use('/progress', progressRoutes)
   v1.use('/events', eventsRoutes)
 
-  Lti.app.use('/api/v1', v1)
+  app.use('/api/v1', v1)
 
   await Lti.deploy({
     port: env.port + 1
@@ -302,7 +302,7 @@ async function registerPlatformIfNeeded() {
   console.log(`[app] Plataforma registrada: ${platform.name}`)
 }
 
-Lti.app.get('/health', async (req, res) => {
+app.get('/health', async (req, res) => {
   const report = {
     backend: 'OK',
     timestamp: new Date().toISOString(),
