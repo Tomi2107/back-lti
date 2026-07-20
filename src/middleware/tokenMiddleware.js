@@ -2,11 +2,19 @@ import jwt from 'jsonwebtoken'
 import { env } from '../config/env.js'
 
 export const tokenMiddleware = (req, res, next) => {
-  const auth = req.headers.authorization
 
-  if (!auth?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'No autenticado.' })
+  console.log("Authorization:", req.headers.authorization);
+
+  const auth = req.headers.authorization;
+
+  if (!auth?.startsWith("Bearer ")) {
+    console.log("NO LLEGÓ AUTH");
+    return res.status(401).json({
+      error: "No autenticado."
+    });
   }
+
+  console.log("TOKEN:", auth);
 
   const token = auth.slice(7)
   try {
