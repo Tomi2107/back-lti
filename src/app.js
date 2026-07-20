@@ -19,34 +19,40 @@ import eventsRoutes from './routes/events.js'
 import os from 'os'
 
 const corsOptions = {
-  origin: function(origin, callback){
+  origin(origin, callback) {
 
     const allowed = [
       'https://traitor-caucus-hunchback.ngrok-free.dev',
+      'https://elliott-pit-titled-archives.trycloudflare.com',
       env.frontendUrl
     ].filter(Boolean);
 
+    console.log("Origin recibido:", origin);
+    console.log("Permitidos:", allowed);
 
-    if(!origin || allowed.includes(origin)){
-      callback(null,true);
-    }else{
-      callback(new Error('CORS bloqueado: '+origin));
+    if (!origin || allowed.includes(origin)) {
+      return callback(null, true);
     }
 
+    console.warn("CORS bloqueado:", origin);
+
+    return callback(new Error("CORS bloqueado"));
   },
 
-  methods:[
-    'GET',
-    'POST',
-    'OPTIONS'
+  methods: [
+    "GET",
+    "POST",
+    "PATCH",
+    "OPTIONS"
   ],
 
-  allowedHeaders:[
-    'Content-Type',
-    'Authorization'
-  ]
-}
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization"
+  ],
 
+  credentials: true
+};
 // ─── ltijs-sequelize: base de datos interna de LTI (plataformas, tokens, etc.) ─
 const ltiDb = new Database(env.pg.database, env.pg.user, env.pg.password, {
   host: env.pg.host,
@@ -71,9 +77,7 @@ Lti.setup(
   }
 )
 
-Lti.app.use(cors({
-  origin: 'https://traitor-caucus-hunchback.ngrok-free.dev, https://elliott-pit-titled-archives.trycloudflare.com/' // El dominio donde está instalado tu Moodle
-}));
+Lti.app.use(cors(corsOptions));
 Lti.app.use(express.json())
 
 // Rutas sin auth — insertadas al frente del stack antes del middleware de ltijs
@@ -179,25 +183,44 @@ export const startServer = async () => {
   // Botón flotante — flujo iframe/AJAX: valida pre-auth JWT y devuelve session JWT como JSON
   // El plugin de Moodle llama esto vía fetch(), nunca navega la página
   Lti.app.post('/tool/token', async (req, res) => {
-    const rawToken = req.body?.preauth_token
-    if (!rawToken) return res.status(400).json({ error: 'preauth_token requerido.' })
 
-    let payload
-    try {
-      payload = jwt.verify(rawToken, env.moodleSharedSecret, { algorithms: ['HS256'] })
-    } catch {
-      return res.status(401).json({ error: 'Token inválido o expirado.' })
+    const {
+      moodle_user_sub,
+      moodle_course_id,
+      moodleUrl
+    } = req.body || {};
+
+    if (!moodle_user_sub) {
+      return res.status(400).json({
+        error: 'moodle_user_sub requerido.'
+      });
     }
 
-    const sessionToken = await createSessionJwt(
-      String(payload.moodle_user_sub),
-      payload.moodle_course_id ?? null,
-      payload.moodleUrl ?? null,
-      req.headers['user-agent'],
-      extractIp(req)
-    )
+    try {
 
-    return res.json({ session_token: sessionToken, frontend_url: env.frontendUrl })
+      const sessionToken = await createSessionJwt(
+        String(moodle_user_sub),
+        moodle_course_id ?? null,
+        moodleUrl ?? null,
+        req.headers['user-agent'],
+        extractIp(req)
+      );
+
+      return res.json({
+        session_token: sessionToken,
+        frontend_url: env.frontendUrl
+      });
+
+    } catch (err) {
+
+      console.error(err);
+
+      return res.status(500).json({
+        error: 'No se pudo crear la sesión.'
+      });
+
+    }
+
   })
 
   // Compatibilidad: GET /tool sigue funcionando para flujos no-iframe (deep link, testing)
