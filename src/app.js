@@ -362,3 +362,31 @@ export const startServer = async () => {
   console.log(`[LTI] URL: ${env.appUrl}`);
   console.log(`[Plugin] API: puerto ${env.port}`);
 }
+
+async function registerPlatformIfNeeded() {
+  const { platform } = env;
+
+  const existing = await Lti.getPlatform(
+    platform.url,
+    platform.clientId
+  ).catch(() => null);
+
+  if (existing) {
+    console.log(`[app] Plataforma ya registrada: ${platform.name}`);
+    return;
+  }
+
+  await Lti.registerPlatform({
+    url: platform.url,
+    name: platform.name,
+    clientId: platform.clientId,
+    authenticationEndpoint: platform.authEndpoint,
+    accesstokenEndpoint: platform.tokenEndpoint,
+    authConfig: {
+      method: 'JWK_SET',
+      key: platform.keysetEndpoint
+    }
+  });
+
+  console.log(`[app] Plataforma registrada: ${platform.name}`);
+}
