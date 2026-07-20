@@ -176,17 +176,19 @@ Lti.onDeepLinking(async (token, req, res) => {
   return Lti.DeepLinking.createDeepLinkingMessage(res, [], { message: 'Deep linking no configurado aún.' })
 })
 
+// ─── Iniciar servidor ─────────────────────────────────────────────────────────
+export const startServer = async () => {
+  await connectDatabase()
+
+
+  // Botón flotante
+  //  — flujo iframe/AJAX: valida pre-auth JWT y devuelve session JWT como JSON
+  // El plugin de Moodle llama esto vía fetch(), nunca navega la página
 const app = express();
 
 app.use(express.json());
 app.use(cors(corsOptions));
 
-// ─── Iniciar servidor ─────────────────────────────────────────────────────────
-export const startServer = async () => {
-  await connectDatabase()
-
-  // Botón flotante — flujo iframe/AJAX: valida pre-auth JWT y devuelve session JWT como JSON
-  // El plugin de Moodle llama esto vía fetch(), nunca navega la página
 app.post('/tool/token', async (req, res) => {
   console.log("ENTRO A TOOL TOKEN");
     const {
