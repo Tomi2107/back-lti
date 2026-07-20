@@ -176,14 +176,19 @@ Lti.onDeepLinking(async (token, req, res) => {
   return Lti.DeepLinking.createDeepLinkingMessage(res, [], { message: 'Deep linking no configurado aún.' })
 })
 
+const app = express();
+
+app.use(express.json());
+app.use(cors(corsOptions));
+
 // ─── Iniciar servidor ─────────────────────────────────────────────────────────
 export const startServer = async () => {
   await connectDatabase()
 
   // Botón flotante — flujo iframe/AJAX: valida pre-auth JWT y devuelve session JWT como JSON
   // El plugin de Moodle llama esto vía fetch(), nunca navega la página
-  Lti.app.post('/tool/token', async (req, res) => {
-
+app.post('/tool/token', async (req, res) => {
+  console.log("ENTRO A TOOL TOKEN");
     const {
       moodle_user_sub,
       moodle_course_id,
@@ -259,7 +264,13 @@ export const startServer = async () => {
 
   Lti.app.use('/api/v1', v1)
 
-  await Lti.deploy({ port: env.port })
+  await Lti.deploy({
+    port: env.port + 1
+  })
+
+  app.listen(env.port, () => {
+    console.log(`[app] FARO API en puerto ${env.port}`)
+  })
 
   await registerPlatformIfNeeded()
 
