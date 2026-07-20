@@ -123,9 +123,34 @@ function extractIp(req) {
 
 async function createSessionJwt(moodle_user_sub, moodle_course_id, moodleUrl, userAgent, ipAddress) {
   await prisma.user.upsert({
-    where: { moodle_user_sub },
-    update: {},
-    create: { moodle_user_sub },
+
+    where:{
+      moodle_user_sub
+    },
+
+    update:{},
+
+    create:{
+      moodle_user_sub,
+
+      accessibility_settings:{
+        voz:false,
+        velocidadVoz:50,
+        volumenVoz:100,
+        fuente:"default",
+        tamanoTexto:"normal",
+        alineacion:"left",
+        brillo:50,
+        contraste:50,
+        saturacion:50,
+        grises:false,
+        altoContraste:false,
+        modoOscuro:false,
+        posicionBoton:"right",
+        perfil:null
+      }
+    }
+
   })
 
   const session_id = randomUUID()
