@@ -72,7 +72,7 @@ Lti.setup(
 )
 
 Lti.app.use(cors({
-  origin: 'https://traitor-caucus-hunchback.ngrok-free.dev' // El dominio donde está instalado tu Moodle
+  origin: 'https://traitor-caucus-hunchback.ngrok-free.dev, https://elliott-pit-titled-archives.trycloudflare.com/' // El dominio donde está instalado tu Moodle
 }));
 Lti.app.use(express.json())
 
