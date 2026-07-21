@@ -121,7 +121,14 @@ function extractIp(req) {
   return (forwarded ? forwarded.split(',')[0] : req.ip ?? '').trim() || null
 }
 
-async function createSessionJwt(moodle_user_sub, moodle_course_id, moodleUrl, userAgent, ipAddress) {
+async function createSessionJwt(
+  moodle_user_sub,
+  moodle_course_id,
+  moodleUrl,
+  userAgent,
+  ipAddress
+) {
+
   await prisma.user.upsert({
 
     where:{
@@ -131,51 +138,90 @@ async function createSessionJwt(moodle_user_sub, moodle_course_id, moodleUrl, us
     update:{},
 
     create:{
+
       moodle_user_sub,
 
       accessibility_settings:{
-        voz:false,
-        velocidadVoz:50,
-        volumenVoz:100,
-        fuente:"default",
-        tamanoTexto:"normal",
-        alineacion:"left",
-        brillo:50,
-        contraste:50,
-        saturacion:50,
-        grises:false,
-        altoContraste:false,
-        modoOscuro:false,
-        posicionBoton:"right",
-        perfil:null
+
+        contrast_mode:false,
+
+        dark_mode:false,
+
+        font_family:"default",
+
+        font_size:"normal",
+
+        alignment:"left",
+
+        brightness:50,
+
+        contrast:50,
+
+        saturation:50,
+
+        grayscale:false,
+
+        voice:false,
+
+        voice_speed:50,
+
+        voice_volume:100
+
       }
+
     }
 
   })
 
+
   const session_id = randomUUID()
+
+
   await prisma.session.create({
-    data: {
+
+    data:{
+
       session_id,
+
       moodle_user_sub,
-      moodle_course_id: moodle_course_id ?? null,
-      user_agent: userAgent ?? '',
-      ip_address: ipAddress ?? null,
-    },
+
+      moodle_course_id:moodle_course_id ?? null,
+
+      user_agent:userAgent ?? '',
+
+      ip_address:ipAddress ?? null,
+
+    }
+
   })
 
+
   return jwt.sign(
+
     {
+
       moodle_user_sub,
+
       session_id,
+
       moodle_course_id,
-      moodleUrl,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 3600,
+
+      moodleUrl
+
     },
+
     env.moodleSharedSecret,
-    { algorithm: 'HS256' }
+
+    {
+
+      algorithm:'HS256',
+
+      expiresIn:'24h'
+
+    }
+
   )
+
 }
 
 // ─── Lanzamiento LTI: crea sesión y redirige al frontend con el JWT ───────────
