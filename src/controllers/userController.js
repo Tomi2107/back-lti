@@ -48,20 +48,23 @@ export const getMe = async (req, res) => {
   }
 
 }
+
 export async function getAccessibility(req,res){
 
     try {
 
-        const { moodle_user_sub } = res.locals.moodleUser
+        const { moodle_user_sub } =
+            res.locals.moodleUser
 
 
-        const user = await prisma.user.findUnique({
+        const user =
+            await prisma.user.findUnique({
 
-            where:{
-                moodle_user_sub
-            }
+                where:{
+                    moodle_user_sub
+                }
 
-        })
+            })
 
 
         if(!user){
@@ -76,7 +79,7 @@ export async function getAccessibility(req,res){
         return res.json({
 
             accessibility_settings:
-                user.accessibility_settings ?? {}
+                user.accessibility_settings || {}
 
         })
 
