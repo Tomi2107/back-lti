@@ -248,13 +248,14 @@ export const startServer = async () => {
         frontend_url: env.frontendUrl
       });
 
-    } catch (err) {
+    } catch(e){
 
-      console.error(err);
+    console.error("ERROR CREANDO SESION:", e)
 
-      return res.status(500).json({
-        error: 'No se pudo crear la sesión.'
-      });
+    return res.status(500).json({
+      error:"No se pudo crear la sesión.",
+      detalle:e.message
+    })
 
     }
 
