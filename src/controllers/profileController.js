@@ -1,21 +1,173 @@
-profileController.js
+import { prisma } from "../lib/prisma.js";
 
-getProfiles()
+/*
+|--------------------------------------------------------------------------
+| Obtener todos los perfiles
+|--------------------------------------------------------------------------
+*/
+export async function getProfiles(req, res) {
 
-getProfile()
+    return res.json({
 
-applyProfile()
+        profiles: [
 
-createProfile()
+            {
+                id: "vision",
+                name: "Baja visión"
+            },
 
-updateProfile()
+            {
+                id: "dyslexia",
+                name: "Dislexia"
+            },
 
-deleteProfile()
+            {
+                id: "focus",
+                name: "Concentración"
+            },
 
-cloneProfile()
+            {
+                id: "voice",
+                name: "Asistencia de voz"
+            }
 
-resetProfile()
+        ]
 
-validateProfile()
+    });
 
-buildProfile()
+}
+
+/*
+|--------------------------------------------------------------------------
+| Obtener un perfil
+|--------------------------------------------------------------------------
+*/
+export async function getProfile(req, res) {
+
+    return res.status(501).json({
+
+        error: "No implementado"
+
+    });
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| Crear perfil personalizado
+|--------------------------------------------------------------------------
+*/
+export async function createProfile(req, res) {
+
+    return res.status(501).json({
+
+        error: "No implementado"
+
+    });
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| Actualizar perfil
+|--------------------------------------------------------------------------
+*/
+export async function updateProfile(req, res) {
+
+    return res.status(501).json({
+
+        error: "No implementado"
+
+    });
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| Eliminar perfil
+|--------------------------------------------------------------------------
+*/
+export async function deleteProfile(req, res) {
+
+    return res.status(501).json({
+
+        error: "No implementado"
+
+    });
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| Duplicar perfil
+|--------------------------------------------------------------------------
+*/
+export async function duplicateProfile(req, res) {
+
+    return res.status(501).json({
+
+        error: "No implementado"
+
+    });
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| Aplicar perfil al usuario
+|--------------------------------------------------------------------------
+*/
+export async function applyProfile(req, res) {
+
+    return res.status(501).json({
+
+        error: "No implementado"
+
+    });
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| Restaurar perfil por defecto
+|--------------------------------------------------------------------------
+*/
+export async function resetProfile(req, res) {
+
+    return res.status(501).json({
+
+        error: "No implementado"
+
+    });
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| Validar perfil
+|--------------------------------------------------------------------------
+*/
+export async function validateProfile(req, res) {
+
+    return res.status(501).json({
+
+        error: "No implementado"
+
+    });
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| Construir perfil automáticamente
+|--------------------------------------------------------------------------
+*/
+export async function buildProfile(req, res) {
+
+    return res.status(501).json({
+
+        error: "No implementado"
+
+    });
+
+}

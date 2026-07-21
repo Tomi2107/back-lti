@@ -10,16 +10,38 @@ import {
 
 } from '../controllers/notificationController.js'
 
+
 const router = Router()
 
-router.get('/', getNotifications)
 
-router.post('/', createNotification)
+router.get(
+    '/',
+    getNotifications
+)
 
-router.patch('/:id/read', markAsRead)
 
-router.patch('/read-all', markAllAsRead)
+router.post(
+    '/',
+    createNotification
+)
 
-router.delete('/:id', deleteNotification)
+
+router.patch(
+    '/:id/read',
+    markAsRead
+)
+
+
+router.patch(
+    '/read-all',
+    markAllAsRead
+)
+
+
+router.delete(
+    '/:id',
+    deleteNotification
+)
+
 
 export default router

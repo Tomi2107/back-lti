@@ -1,41 +1,36 @@
 import { Router } from 'express'
 
 import {
-    getMe,
-    updateOnboarding
-} from '../controllers/userController.js'
 
-import {
     getAccessibility,
     updateAccessibility,
     resetAccessibility
+
 } from '../controllers/accessibilityController.js'
+
 
 const router = Router()
 
-router.get(
-    '/me',
-    getMe
-)
 
+// Obtener configuración FARO
 router.get(
-    '/me/accessibility',
+    '/',
     getAccessibility
 )
 
+
+// Guardar configuración FARO
 router.patch(
-    '/me/accessibility',
+    '/',
     updateAccessibility
 )
 
+
+// Restaurar valores por defecto
 router.post(
-    '/me/accessibility/reset',
+    '/reset',
     resetAccessibility
 )
 
-router.patch(
-    '/me/onboarding',
-    updateOnboarding
-)
 
 export default router

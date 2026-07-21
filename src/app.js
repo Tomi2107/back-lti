@@ -16,7 +16,7 @@ import progressRoutes from './routes/progress.js'
 import eventsRoutes from './routes/events.js'
 
 
-import os from 'os'
+import os from 'node:os'
 
 const corsOptions = {
   origin(origin, callback) {
@@ -306,25 +306,104 @@ export const startServer = async () => {
     }
 
   });
+// ------------------------------------------------------------
+// API REST
+// ------------------------------------------------------------
 
-  // ------------------------------------------------------------
-  // API REST
-  // ------------------------------------------------------------
+const v1 = express.Router();
 
-  const v1 = express.Router();
 
-  v1.use(tokenMiddleware);
+// Middleware JWT FARO
+v1.use(tokenMiddleware);
 
-  v1.use('/users', usersRoutes);
-  v1.use('/courses', coursesRoutes);
-  v1.use('/content', contentRoutes);
-  v1.use('/ai', aiRoutes);
-  v1.use('/progress', progressRoutes);
-  v1.use('/events', eventsRoutes);
 
-  app.use('/api/v1', v1);
+// Usuarios
+v1.use(
+  '/users',
+  usersRoutes
+);
 
-  // ------------------------------------------------------------
+
+// Cursos
+v1.use(
+  '/courses',
+  coursesRoutes
+);
+
+
+// Contenido
+v1.use(
+  '/content',
+  contentRoutes
+);
+
+
+// IA
+v1.use(
+  '/ai',
+  aiRoutes
+);
+
+
+// Progreso
+v1.use(
+  '/progress',
+  progressRoutes
+);
+
+
+// Eventos
+v1.use(
+  '/events',
+  eventRoutes
+);
+
+
+// Perfil
+v1.use(
+  '/profile',
+  profileRoutes
+);
+
+
+// Notificaciones
+v1.use(
+  '/notifications',
+  notificationRoutes
+);
+
+
+// Focus
+v1.use(
+  '/focus',
+  focusRoutes
+);
+
+
+// Asistente
+v1.use(
+  '/assistant',
+  assistantRoutes
+);
+
+
+// Accesibilidad FARO
+v1.use(
+  '/accessibility',
+  accessibilityRoutes
+);
+
+
+// Montar API completa
+app.use(
+  '/api/v1',
+  v1
+);
+
+
+  // -----
+  // 
+  // -------------------------------------------------------
   // Health
   // ------------------------------------------------------------
 

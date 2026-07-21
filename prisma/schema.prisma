@@ -8,21 +8,22 @@ datasource db {
 }
 
 model User {
+  id String @id @default(uuid())
 
- id String @id @default(uuid())
+  moodle_user_sub String @unique
 
- moodle_user_sub String @unique
+  accessibility_settings Json @default("{}")
 
- accessibility_settings Json @default("{}")
+  onboarding_completed Boolean @default(false)
 
- onboarding_completed Boolean @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
- created_at DateTime @default(now())
- updated_at DateTime @updatedAt
+  sessions Session[]
 
- sessions Session[]
+  profiles AccessibilityProfile[]
 
- @@map("users")
+  @@map("users")
 }
 
 model Session {
@@ -213,4 +214,22 @@ model states {
   updatedAt DateTime @db.Timestamptz(6)
 
   @@index([createdAt], map: "states_created_at")
+}
+
+model AccessibilityProfile {
+  id String @id @default(uuid())
+
+  userId String
+
+  name String
+
+  settings Json @default("{}")
+
+  created_at DateTime @default(now())
+
+  updated_at DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("accessibility_profiles")
 }
