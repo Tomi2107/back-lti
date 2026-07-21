@@ -25,7 +25,6 @@ const corsOptions = {
       'https://traitor-caucus-hunchback.ngrok-free.dev',
       'https://elliott-pit-titled-archives.trycloudflare.com',
       'https://probable-exposable-polio.ngrok-free.dev'
-      env.frontendUrl
     ].filter(Boolean);
 
     console.log("Origin recibido:", origin);
