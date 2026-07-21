@@ -134,43 +134,56 @@ async function createSessionJwt(
   ipAddress
 ) {
 
-  await prisma.user.upsert({
+  const user = await prisma.user.upsert({
 
-    where:{
+    where: {
       moodle_user_sub
     },
 
-    update:{},
+    update: {},
 
-    create:{
+    create: {
+      moodle_user_sub
+    }
 
-      moodle_user_sub,
+  })
 
-      accessibility_settings:{
 
-        contrast_mode:false,
+  await prisma.accessibilityProfile.upsert({
 
-        dark_mode:false,
+    where: {
+      userId_name: {
+        userId: user.id,
+        name: "default"
+      }
+    },
 
-        font_family:"default",
+    update: {},
 
-        font_size:"normal",
+    create: {
 
-        alignment:"left",
+      userId: user.id,
 
-        brightness:50,
+      name: "default",
 
-        contrast:50,
+      settings: {
 
-        saturation:50,
+        contrast_mode: false,
+        dark_mode: false,
 
-        grayscale:false,
+        font_family: "default",
+        font_size: "normal",
+        alignment: "left",
 
-        voice:false,
+        brightness: 50,
+        contrast: 50,
+        saturation: 50,
 
-        voice_speed:50,
+        grayscale: false,
 
-        voice_volume:100
+        voice: false,
+        voice_speed: 50,
+        voice_volume: 100
 
       }
 
@@ -184,17 +197,17 @@ async function createSessionJwt(
 
   await prisma.session.create({
 
-    data:{
+    data: {
 
       session_id,
 
       moodle_user_sub,
 
-      moodle_course_id:moodle_course_id ?? null,
+      moodle_course_id: moodle_course_id ?? null,
 
-      user_agent:userAgent ?? '',
+      user_agent: userAgent ?? '',
 
-      ip_address:ipAddress ?? null,
+      ip_address: ipAddress ?? null
 
     }
 
@@ -219,9 +232,9 @@ async function createSessionJwt(
 
     {
 
-      algorithm:'HS256',
+      algorithm: "HS256",
 
-      expiresIn:'24h'
+      expiresIn: "24h"
 
     }
 
