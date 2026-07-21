@@ -15,6 +15,11 @@ import aiRoutes from './routes/ai.js'
 import progressRoutes from './routes/progress.js'
 import eventsRoutes from './routes/events.js'
 
+import profileRoutes from './routes/profile.js'
+import notificationRoutes from './routes/notifications.js'
+import focusRoutes from './routes/focus.js'
+import assistantRoutes from './routes/assistant.js'
+import accessibilityRoutes from './routes/accessibility.js'
 
 import os from 'node:os'
 
@@ -318,87 +323,51 @@ v1.use(tokenMiddleware);
 
 
 // Usuarios
-v1.use(
-  '/users',
-  usersRoutes
-);
+v1.use('/users', usersRoutes);
 
 
 // Cursos
-v1.use(
-  '/courses',
-  coursesRoutes
-);
+v1.use('/courses', coursesRoutes);
 
 
 // Contenido
-v1.use(
-  '/content',
-  contentRoutes
-);
+v1.use('/content', contentRoutes);
 
 
 // IA
-v1.use(
-  '/ai',
-  aiRoutes
-);
+v1.use('/ai', aiRoutes);
 
 
 // Progreso
-v1.use(
-  '/progress',
-  progressRoutes
-);
+v1.use('/progress', progressRoutes);
 
 
 // Eventos
-v1.use(
-  '/events',
-  eventRoutes
-);
+v1.use('/events', eventsRoutes);
 
 
 // Perfil
-v1.use(
-  '/profile',
-  profileRoutes
-);
+v1.use('/profile', profileRoutes);
 
 
 // Notificaciones
-v1.use(
-  '/notifications',
-  notificationRoutes
-);
+v1.use('/notifications', notificationRoutes);
 
 
 // Focus
-v1.use(
-  '/focus',
-  focusRoutes
-);
+v1.use('/focus', focusRoutes);
 
 
 // Asistente
-v1.use(
-  '/assistant',
-  assistantRoutes
-);
+v1.use('/assistant', assistantRoutes);
 
 
 // Accesibilidad FARO
-v1.use(
-  '/accessibility',
-  accessibilityRoutes
-);
+v1.use('/accessibility', accessibilityRoutes);
 
 
 // Montar API completa
-app.use(
-  '/api/v1',
-  v1
-);
+app.use('/api/v1', v1);
 
 
   // -----
