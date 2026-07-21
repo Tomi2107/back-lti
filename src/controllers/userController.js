@@ -102,75 +102,69 @@ export async function getAccessibility(req,res){
 
 }
 
-
-
-export async function updateAccessibility(req,res){
+export async function updateAccessibility(req, res) {
 
     try {
 
-
         const { moodle_user_sub } = res.locals.moodleUser;
 
-
-        if(!moodle_user_sub){
-
+        if (!moodle_user_sub) {
             return res.status(401).json({
-                error:"Usuario no autenticado"
+                error: "Usuario no autenticado"
             });
-
         }
 
+        console.log("GUARDANDO ACCESSIBILITY:", req.body);
 
-        console.log(
-            "GUARDANDO ACCESSIBILITY:",
-            req.body
-        );
+        const currentUser = await prisma.user.findUnique({
+            where: {
+                moodle_user_sub
+            }
+        });
 
+        if (!currentUser) {
+            return res.status(404).json({
+                error: "Usuario no encontrado"
+            });
+        }
+
+        const nuevasPreferencias = {
+            ...(currentUser.accessibility_settings || {}),
+            ...req.body
+        };
 
         const user = await prisma.user.update({
 
-            where:{
+            where: {
                 moodle_user_sub
             },
 
-
-            data:{
-                accessibility_settings:req.body
+            data: {
+                accessibility_settings: nuevasPreferencias
             }
 
         });
 
-
-
         return res.json({
 
-            ok:true,
+            ok: true,
 
-            accessibility_settings:
-              user.accessibility_settings
+            accessibility_settings: user.accessibility_settings
 
         });
 
+    } catch (error) {
 
-
-    } catch(error){
-
-
-        console.error(
-            "ERROR UPDATE ACCESSIBILITY:",
-            error
-        );
-
+        console.error("ERROR UPDATE ACCESSIBILITY:", error);
 
         return res.status(500).json({
-
-            error:"Error guardando preferencias"
-
+            error: "Error guardando preferencias"
         });
 
-
     }
+
 }
+
 export const updateOnboarding = async (req, res) => {
 
   try {

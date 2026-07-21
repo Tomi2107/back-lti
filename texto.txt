@@ -13,4 +13,90 @@ sessionController.js
 ttsController.js             ⭐
 tourController.js            ⭐
 focusController.js           ⭐
-userController.js
+userController.
+
+
+export const updateAccessibility = async (req,res)=>{
+
+ const {moodle_user_sub}=res.locals.moodleUser;
+
+
+ const data={};
+
+
+ const allowed=[
+  "contrast_mode",
+  "dark_mode",
+  "grayscale",
+  "font_size",
+  "font_family",
+  "alignment",
+  "brightness",
+  "contrast",
+  "saturation",
+  "voice",
+  "voice_speed",
+  "voice_volume"
+ ];
+
+
+ allowed.forEach(field=>{
+
+   if(req.body[field] !== undefined){
+      data[field]=req.body[field];
+   }
+
+ });
+
+
+ if(Object.keys(data).length===0){
+
+    return res.status(400).json({
+      error:"No hay datos para actualizar"
+    });
+
+ }
+
+
+ const user=await prisma.user.update({
+
+   where:{
+     moodle_user_sub
+   },
+
+   data
+
+ });
+
+
+ return res.json({
+   accessibility_settings:data,
+   updated_at:user.updated_at
+ });
+
+
+}
+
+--------------------
+faroState.modoOscuro =
+ settings.dark_mode ?? false;
+
+
+faroState.grises =
+ settings.grayscale ?? false;
+
+
+faroState.alineacion =
+ settings.alignment ?? "left";
+
+
+faroState.brillo =
+ settings.brightness ?? 50;
+
+
+faroState.contraste =
+ settings.contrast ?? 50;
+
+
+faroState.saturacion =
+ settings.saturation ?? 50;
