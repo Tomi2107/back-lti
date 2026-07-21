@@ -39,6 +39,11 @@ function mergeSettings(settings = {}) {
 
 export async function getAccessibility(req, res) {
 
+  console.log(
+   "USER EN CONTROLLER:",
+   res.locals.moodleUser
+ )
+ 
   try {
 
     const { moodle_user_sub } = res.locals.moodleUser
