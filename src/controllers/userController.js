@@ -17,40 +17,39 @@ export const getMe = async (req, res) => {
   })
 }
 
-export async function updateAccessibility(req, res) {
+export async function updateAccessibility(req,res){
 
     try {
 
-        const moodle_user_sub = req.user.moodle_user_sub;
+        const moodleUser = res.locals.moodleUser;
 
-        const settings = req.body;
+        if(!moodleUser){
+            return res.status(401).json({
+                error:"Usuario no autenticado"
+            });
+        }
 
 
         const user = await prisma.user.update({
 
             where:{
-                moodle_user_sub
+                moodle_user_sub: moodleUser.moodle_user_sub
             },
 
             data:{
-                accessibility_settings: settings
+                accessibility_settings: req.body
             }
 
         });
 
 
-        res.json({
-
-            success:true,
-
-            accessibility_settings:
-                user.accessibility_settings
-
+        return res.json({
+            ok:true,
+            user
         });
 
 
-    } catch(error) {
-
+    } catch(error){
 
         console.error(
             "ERROR UPDATE ACCESSIBILITY:",
@@ -58,14 +57,11 @@ export async function updateAccessibility(req, res) {
         );
 
 
-        res.status(500).json({
-
-            error:"Error guardando accesibilidad"
-
+        return res.status(500).json({
+            error:"Error guardando preferencias"
         });
 
     }
-
 }
 
 export const updateOnboarding = async (req, res) => {

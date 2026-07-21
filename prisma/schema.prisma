@@ -8,18 +8,21 @@ datasource db {
 }
 
 model User {
-  id                     String    @id @default(uuid())
-  moodle_user_sub        String    @unique
-  contrast_mode          String    @default("normal")
-  font_size              Int       @default(16)
-  font_family            String    @default("Arial")
-  onboarding_completed   Boolean   @default(false)
-  created_at             DateTime  @default(now())
-  updated_at             DateTime  @updatedAt
-  accessibility_settings Json      @default("{}")
-  sessions               Session[]
 
-  @@map("users")
+ id String @id @default(uuid())
+
+ moodle_user_sub String @unique
+
+ accessibility_settings Json @default("{}")
+
+ onboarding_completed Boolean @default(false)
+
+ created_at DateTime @default(now())
+ updated_at DateTime @updatedAt
+
+ sessions Session[]
+
+ @@map("users")
 }
 
 model Session {
