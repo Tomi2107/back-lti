@@ -168,3 +168,56 @@ export async function updateAccessibility(req,res){
 
     }
 }
+export const updateOnboarding = async (req, res) => {
+
+  try {
+
+    const { moodle_user_sub } = res.locals.moodleUser
+
+    const { onboarding_completed } = req.body
+
+
+    if (typeof onboarding_completed !== 'boolean') {
+
+      return res.status(400).json({
+        error: 'onboarding_completed debe ser boolean.'
+      })
+
+    }
+
+
+    const user = await prisma.user.update({
+
+      where:{
+        moodle_user_sub
+      },
+
+      data:{
+        onboarding_completed
+      }
+
+    })
+
+
+    return res.json({
+
+      onboarding_completed:
+        user.onboarding_completed
+
+    })
+
+
+  } catch(error){
+
+    console.error(
+      "ERROR UPDATE ONBOARDING:",
+      error
+    )
+
+    return res.status(500).json({
+      error:"Error actualizando onboarding"
+    })
+
+  }
+
+}
