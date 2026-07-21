@@ -17,28 +17,55 @@ export const getMe = async (req, res) => {
   })
 }
 
-export const updateAccessibility = async (req, res) => {
-  const { moodle_user_sub } = res.locals.moodleUser
-  const { contrast_mode, font_size, font_family } = req.body
-  const data = {}
+export async function updateAccessibility(req, res) {
 
-  if (contrast_mode !== undefined) data.contrast_mode = contrast_mode
-  if (font_size !== undefined) data.font_size = font_size
-  if (font_family !== undefined) data.font_family = font_family
+    try {
 
-  if (Object.keys(data).length === 0) {
-    return res.status(400).json({ error: 'No se enviaron campos válidos.' })
-  }
+        const moodle_user_sub = req.user.moodle_user_sub;
 
-  const user = await prisma.user.update({ where: { moodle_user_sub }, data })
-  return res.json({
-    accessibility_settings: {
-      contrast_mode: user.contrast_mode,
-      font_size: user.font_size,
-      font_family: user.font_family,
-    },
-    updated_at: user.updated_at,
-  })
+        const settings = req.body;
+
+
+        const user = await prisma.user.update({
+
+            where:{
+                moodle_user_sub
+            },
+
+            data:{
+                accessibility_settings: settings
+            }
+
+        });
+
+
+        res.json({
+
+            success:true,
+
+            accessibility_settings:
+                user.accessibility_settings
+
+        });
+
+
+    } catch(error) {
+
+
+        console.error(
+            "ERROR UPDATE ACCESSIBILITY:",
+            error
+        );
+
+
+        res.status(500).json({
+
+            error:"Error guardando accesibilidad"
+
+        });
+
+    }
+
 }
 
 export const updateOnboarding = async (req, res) => {
