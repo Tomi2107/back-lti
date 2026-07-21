@@ -23,6 +23,8 @@ export async function updateAccessibility(req,res){
 
         const moodleUser = res.locals.moodleUser;
 
+        const userSub = moodleUser.moodle_user_sub;
+        
         if(!moodleUser){
             return res.status(401).json({
                 error:"Usuario no autenticado"
