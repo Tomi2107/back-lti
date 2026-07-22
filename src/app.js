@@ -136,111 +136,109 @@ async function createSessionJwt(
 
   const user = await prisma.user.upsert({
 
-    where: {
-      moodle_user_sub
-    },
+  where: {
+    moodle_user_sub
+  },
 
-    update: {},
+  update: {},
 
-    create: {
-      moodle_user_sub
-    }
+  create: {
+    moodle_user_sub
+  }
 
-  })
+})
 
+console.log("Usuario LTI:", user)
 
-  await prisma.accessibilityProfile.upsert({
+const profile = await prisma.accessibilityProfile.upsert({
 
-    where: {
-      userId_name: {
-        userId: user.id,
-        name: "default"
-      }
-    },
-
-    update: {},
-
-    create: {
-
+  where: {
+    userId_name: {
       userId: user.id,
+      name: "default"
+    }
+  },
 
-      name: "default",
+  update: {},
 
-      settings: {
+  create: {
 
-        contrast_mode: false,
-        dark_mode: false,
+    userId: user.id,
 
-        font_family: "default",
-        font_size: "normal",
-        alignment: "left",
+    name: "default",
 
-        brightness: 50,
-        contrast: 50,
-        saturation: 50,
+    settings: {
 
-        grayscale: false,
+      contrast_mode: false,
+      dark_mode: false,
 
-        voice: false,
-        voice_speed: 50,
-        voice_volume: 100
+      font_family: "default",
+      font_size: "normal",
+      alignment: "left",
 
-      }
+      brightness: 50,
+      contrast: 50,
+      saturation: 50,
+
+      grayscale: false,
+
+      voice: false,
+      voice_speed: 50,
+      voice_volume: 100
 
     }
 
-  })
+  }
 
+})
 
-  const session_id = randomUUID()
+console.log("Perfil creado/encontrado:", profile)
 
+const session_id = randomUUID()
 
-  await prisma.session.create({
+await prisma.session.create({
 
-    data: {
+  data: {
 
-      session_id,
+    session_id,
 
-      moodle_user_sub,
+    moodle_user_sub,
 
-      moodle_course_id: moodle_course_id ?? null,
+    moodle_course_id: moodle_course_id ?? null,
 
-      user_agent: userAgent ?? '',
+    user_agent: userAgent ?? "",
 
-      ip_address: ipAddress ?? null
+    ip_address: ipAddress ?? null
 
-    }
+  }
 
-  })
+})
 
+return jwt.sign(
 
-  return jwt.sign(
+  {
 
-    {
+    moodle_user_sub,
 
-      moodle_user_sub,
+    session_id,
 
-      session_id,
+    moodle_course_id,
 
-      moodle_course_id,
+    moodleUrl
 
-      moodleUrl
+  },
 
-    },
+  env.moodleSharedSecret,
 
-    env.moodleSharedSecret,
+  {
 
-    {
+    algorithm: "HS256",
 
-      algorithm: "HS256",
+    expiresIn: "24h"
 
-      expiresIn: "24h"
+  }
 
-    }
-
-  )
-
-}
+)
 
 // ─── Lanzamiento LTI: crea sesión y redirige al frontend con el JWT ───────────
 Lti.onConnect(async (token, req, res) => {
