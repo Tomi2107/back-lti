@@ -1,11 +1,9 @@
 import { Router } from 'express'
 
 import {
-
-    getAccessibility,
-    updateAccessibility,
-    resetAccessibility
-
+  getAccessibility,
+  updateAccessibility,
+  resetAccessibility
 } from '../controllers/accessibilityController.js'
 
 
@@ -14,22 +12,22 @@ const router = Router()
 
 // Obtener configuración FARO
 router.get(
-    '/',
-    getAccessibility
+  '/me/accessibility',
+  getAccessibility
 )
 
 
 // Guardar configuración FARO
 router.patch(
-    '/',
-    updateAccessibility
+  '/me/accessibility',
+  updateAccessibility
 )
 
 
 // Restaurar valores por defecto
 router.post(
-    '/reset',
-    resetAccessibility
+  '/me/accessibility/reset',
+  resetAccessibility
 )
 
 

@@ -272,6 +272,7 @@ export const startServer = async () => {
   // ============================================================
 
   const app = express();
+  app.disable('x-powered-by');
 
   app.use(express.json());
   app.use(cors(corsOptions));
@@ -326,59 +327,58 @@ export const startServer = async () => {
 // API REST
 // ------------------------------------------------------------
 
-const v1 = express.Router();
+  const v1 = express.Router();
 
 
-// Middleware JWT FARO
-v1.use(tokenMiddleware);
+  // Middleware JWT FARO
+  v1.use(tokenMiddleware);
 
 
-// Usuarios
-v1.use('/users', usersRoutes);
+  // Usuarios
+  v1.use('/users', usersRoutes);
 
 
-// Cursos
-v1.use('/courses', coursesRoutes);
+  // Cursos
+  v1.use('/courses', coursesRoutes);
 
 
-// Contenido
-v1.use('/content', contentRoutes);
+  // Contenido
+  v1.use('/content', contentRoutes);
 
 
-// IA
-v1.use('/ai', aiRoutes);
+  // IA
+  v1.use('/ai', aiRoutes);
 
 
-// Progreso
-v1.use('/progress', progressRoutes);
+  // Progreso
+  v1.use('/progress', progressRoutes);
 
 
-// Eventos
-v1.use('/events', eventsRoutes);
+  // Eventos
+  v1.use('/events', eventsRoutes);
 
 
-// Perfil
-v1.use('/profile', profileRoutes);
+  // Perfil
+  v1.use('/profile', profileRoutes);
 
 
-// Notificaciones
-v1.use('/notifications', notificationRoutes);
+  // Notificaciones
+  v1.use('/notifications', notificationRoutes);
 
 
-// Focus
-v1.use('/focus', focusRoutes);
+  // Focus
+  v1.use('/focus', focusRoutes);
 
 
-// Asistente
-v1.use('/assistant', assistantRoutes);
+  // Asistente
+  v1.use('/assistant', assistantRoutes);
 
 
-// Accesibilidad FARO
-v1.use('/accessibility', accessibilityRoutes);
+  // Accesibilidad FARO
+  v1.use('/users', accessibilityRoutes);
 
-
-// Montar API completa
-app.use('/api/v1', v1);
+  // Montar API completa
+  app.use('/api/v1', v1);
 
 
   // -----
