@@ -239,7 +239,7 @@ return jwt.sign(
   }
 
 )
-
+}
 // ─── Lanzamiento LTI: crea sesión y redirige al frontend con el JWT ───────────
 Lti.onConnect(async (token, req, res) => {
   const moodle_user_sub = String(token.user)
