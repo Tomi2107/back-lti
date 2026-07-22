@@ -145,7 +145,9 @@ export async function getAccessibility(req, res) {
 // ======================================================
 
 export async function updateAccessibility(req,res){
-
+    console.log("========== UPDATE ACCESSIBILITY ==========");
+    console.log("USER JWT:", req.user);
+    console.log("BODY:", req.body);
 
     try {
 
