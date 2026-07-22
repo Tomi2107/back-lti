@@ -32,14 +32,25 @@ export const tokenMiddleware = (req, res, next) => {
     console.log('✅ JWT válido')
     console.log(payload)
 
-    res.locals.moodleUser = {
+
+    const moodleUser = {
       moodle_user_sub: String(payload.moodle_user_sub),
       session_id: payload.session_id ?? null,
       moodle_course_id: payload.moodle_course_id ?? null,
       moodleUrl: payload.moodleUrl ?? null,
     }
 
+
+    // Mantener lo que ya tenías
+    res.locals.moodleUser = moodleUser
+
+
+    // 👇 agregar esto
+    req.user = moodleUser
+
+
     return next()
+
 
   } catch (err) {
 
