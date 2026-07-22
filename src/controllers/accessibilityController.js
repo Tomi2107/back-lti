@@ -182,7 +182,27 @@ export const updateAccessibility = async (req, res) => {
 
 
 
-    console.log("5) Ejecutando AccessibilityProfile upsert...")
+    console.log("5) Buscando perfil actual...")
+
+
+    const current = await prisma.accessibilityProfile.findUnique({
+
+      where: {
+        userId_name: {
+          userId: user.id,
+          name: "default"
+        }
+      }
+
+    })
+
+
+    console.log("Perfil actual:")
+    console.log(current)
+
+
+
+    console.log("6) Ejecutando AccessibilityProfile upsert...")
 
 
     const profile = await prisma.accessibilityProfile.upsert({
@@ -196,7 +216,15 @@ export const updateAccessibility = async (req, res) => {
 
 
       update: {
-        settings: req.body
+
+        settings: {
+
+          ...(current?.settings || {}),
+
+          ...req.body
+
+        }
+
       },
 
 
@@ -213,12 +241,12 @@ export const updateAccessibility = async (req, res) => {
     })
 
 
-    console.log("6) Profile OK:")
+    console.log("7) Profile OK:")
     console.log(profile)
 
 
 
-    console.log("7) Respondiendo OK")
+    console.log("8) Respondiendo OK")
 
 
     return res.json({
