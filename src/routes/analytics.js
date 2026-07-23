@@ -17,80 +17,26 @@ import {
 
 } from '../controllers/analyticsController.js'
 
-
 const router = Router()
 
+// Dashboard principal
+router.get('/dashboard', getDashboard)
 
-router.get(
-    '/dashboard',
-    getDashboard
-)
+// Estadísticas por categoría
+router.get('/users', getUserAnalytics)
+router.get('/courses', getCourseAnalytics)
+router.get('/accessibility', getAccessibilityAnalytics)
+router.get('/sessions', getSessionAnalytics)
+router.get('/ai', getAIAnalytics)
+router.get('/progress', getProgressAnalytics)
+router.get('/activities', getActivityAnalytics)
 
+// Gráficos
+router.get('/heatmap', getHeatmap)
+router.get('/timeline', getTimeline)
+router.get('/usage', getUsageStatistics)
 
-router.get(
-    '/user',
-    getUserAnalytics
-)
-
-
-router.get(
-    '/course',
-    getCourseAnalytics
-)
-
-
-router.get(
-    '/accessibility',
-    getAccessibilityAnalytics
-)
-
-
-router.get(
-    '/sessions',
-    getSessionAnalytics
-)
-
-
-router.get(
-    '/ai',
-    getAIAnalytics
-)
-
-
-router.get(
-    '/progress',
-    getProgressAnalytics
-)
-
-
-router.get(
-    '/activity',
-    getActivityAnalytics
-)
-
-
-router.get(
-    '/heatmap',
-    getHeatmap
-)
-
-
-router.get(
-    '/timeline',
-    getTimeline
-)
-
-
-router.get(
-    '/usage',
-    getUsageStatistics
-)
-
-
-router.get(
-    '/recommendations',
-    getRecommendations
-)
-
+// IA
+router.get('/recommendations', getRecommendations)
 
 export default router

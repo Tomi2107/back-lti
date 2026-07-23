@@ -21,6 +21,8 @@ import focusRoutes from './routes/focus.js'
 import assistantRoutes from './routes/assistant.js'
 import accessibilityRoutes from './routes/accessibility.js'
 import dashboardRoutes from './routes/dashboardRoutes.js';
+import analyticsRoutes from './routes/analyticsRoutes.js';
+
 
 import os from 'node:os'
 
@@ -331,6 +333,8 @@ export const startServer = async () => {
   const v1 = express.Router();
 
   v1.use('/dashboard', dashboardRoutes);
+
+  v1.use('/analytics', analyticsRoutes);
 
 
   // Middleware JWT FARO
