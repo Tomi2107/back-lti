@@ -330,6 +330,8 @@ export const startServer = async () => {
 
   const v1 = express.Router();
 
+  v1.use('/dashboard', dashboardRoutes);
+
 
   // Middleware JWT FARO
   v1.use(tokenMiddleware);
@@ -377,8 +379,6 @@ export const startServer = async () => {
 
   // Accesibilidad FARO
   v1.use('/users', accessibilityRoutes);
-
-  v1.use('/dashboard', dashboardRoutes);
 
   // Montar API completa
   app.use('/api/v1', v1);
