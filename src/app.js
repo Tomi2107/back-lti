@@ -21,7 +21,7 @@ import focusRoutes from './routes/focus.js'
 import assistantRoutes from './routes/assistant.js'
 import accessibilityRoutes from './routes/accessibility.js'
 import dashboardRoutes from './routes/dashboardRoutes.js';
-import analyticsRoutes from './routes/analyticsRoutes.js';
+import analyticsRoutes from './routes/analytics.js';
 
 
 import os from 'node:os'
