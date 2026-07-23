@@ -20,6 +20,7 @@ import notificationRoutes from './routes/notifications.js'
 import focusRoutes from './routes/focus.js'
 import assistantRoutes from './routes/assistant.js'
 import accessibilityRoutes from './routes/accessibility.js'
+import dashboardRoutes from './routes/dashboardRoutes.js';
 
 import os from 'node:os'
 
@@ -376,6 +377,8 @@ export const startServer = async () => {
 
   // Accesibilidad FARO
   v1.use('/users', accessibilityRoutes);
+
+  v1.use('/dashboard', dashboardRoutes);
 
   // Montar API completa
   app.use('/api/v1', v1);
