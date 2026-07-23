@@ -3,9 +3,6 @@ import { prisma } from "../lib/prisma.js";
 /* =========================================
    DASHBOARD GENERAL
 ========================================= */
-
-import { prisma } from '../lib/prisma.js';
-
 export async function getDashboard(req, res) {
 
     try {
